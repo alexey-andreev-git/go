@@ -8,6 +8,6 @@ import (
 
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/companies", controller.CompaniesHandler).Methods("GET")
+	r.HandleFunc("/entity", controller.EntityHandler).Methods("GET")
 	return r
 }

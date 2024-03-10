@@ -6,7 +6,7 @@ import (
 	"what-to.com/internal/service"
 )
 
-func CompaniesHandler(w http.ResponseWriter, r *http.Request) {
-	result := service.CompaniesServiceFunction()
+func EntityHandler(w http.ResponseWriter, r *http.Request) {
+	result := service.EntityServiceFunction(r)
 	w.Write([]byte(result))
 }

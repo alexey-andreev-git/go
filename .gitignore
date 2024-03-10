@@ -1,2 +1,5 @@
 # Ignore .vscode directory
 .vscode/
+
+# Ignore generated logs
+what-to.com/cmd/server/app.log

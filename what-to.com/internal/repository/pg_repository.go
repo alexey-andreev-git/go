@@ -3,20 +3,20 @@ package repository
 import (
 	"database/sql"
 
-	"what-to/internal/entity"
+	"what-to.com/internal/entity"
 )
 
 type PgRepository struct {
 	DB *sql.DB
 }
 
-func NewYourRepository(db *sql.DB) *YourRepository {
-	return &YourRepository{DB: db}
+func NewPgRepository(db *sql.DB) *PgRepository {
+	return &PgRepository{DB: db}
 }
 
 // Пример функции для добавления новой сущности в базу данных
-func (r *YourRepository) CreateYourEntity(ye entity.YourEntity) error {
-	query := `INSERT INTO your_entity_table (name) VALUES ($1)`
+func (r *PgRepository) CreateYourEntity(ye entity.CompanyEntity) error {
+	query := `INSERT INTO company_entity_table (name) VALUES ($1)`
 	_, err := r.DB.Exec(query, ye.Name)
 	return err
 }
