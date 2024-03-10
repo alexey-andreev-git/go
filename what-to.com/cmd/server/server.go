@@ -3,13 +3,14 @@ package main
 import (
 	"net/http"
 
+	"what-to.com/internal/config"
 	"what-to.com/internal/logger"
 	"what-to.com/internal/repository"
 	"what-to.com/internal/router"
 )
 
 func main() {
-	initRepository()
+	initApplication()
 
 	r := router.SetupRouter()
 
@@ -17,7 +18,8 @@ func main() {
 }
 
 // initRepository initializes the repository
-func initRepository() {
-	repository.SetDBConfig(repository.ReadDBConfig())
+func initApplication() {
+	config.ReadConfig()
+	repository.SetDBConfig(config.Config["database"].(config.ConfigT))
 	repository.ConnectToDB()
 }

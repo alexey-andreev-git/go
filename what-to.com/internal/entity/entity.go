@@ -1,7 +1,7 @@
 package entity
 
 // Define your data models here
-type CompanyEntity struct {
+type Entity struct {
 	ID   int
 	Name string
 }

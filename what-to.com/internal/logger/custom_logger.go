@@ -20,7 +20,7 @@ var (
 // Implement newCustomLogger
 func newCustomLogger() customLogger {
 	l := customLogger{}
-	l.logFileName = "app.log"
+	l.logFileName = "whattoapp.log"
 	l.init()
 	return l
 }
@@ -35,23 +35,23 @@ func (l *customLogger) init() {
 }
 
 func (l *customLogger) Fatal(str string, err error) {
-	l.stdLogger.Fatalf("%s [FATAL] %s %v", getLocationInfo(), str, err)
+	l.stdLogger.Fatalf("[FATAL] %s %s %v", getLocationInfo(), str, err)
 }
 
 func (l *customLogger) Panic(str string, err error) {
-	l.stdLogger.Panicf("%s [PANIC] %s %v", getLocationInfo(), str, err)
+	l.stdLogger.Panicf("[PANIC] %s %s %v", getLocationInfo(), str, err)
 }
 
 func (l *customLogger) Info(str string) {
-	l.stdLogger.Printf("%s [INFO] %s", getLocationInfo(), str)
+	l.stdLogger.Printf("[INFO] %s %s", getLocationInfo(), str)
 }
 
 func (l *customLogger) Debug(str string) {
-	l.stdLogger.Printf("%s [DEBUG] %s", getLocationInfo(), str)
+	l.stdLogger.Printf("[DEBUG] %s %s", getLocationInfo(), str)
 }
 
 func (l *customLogger) Warn(str string) {
-	l.stdLogger.Printf("%s [WARN] %s", getLocationInfo(), str)
+	l.stdLogger.Printf("[WARN] %s %s", getLocationInfo(), str)
 }
 
 func getLocationInfo() string {

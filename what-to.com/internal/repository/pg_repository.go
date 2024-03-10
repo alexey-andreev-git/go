@@ -15,10 +15,8 @@ func NewPgRepository(db *sql.DB) *PgRepository {
 }
 
 // Пример функции для добавления новой сущности в базу данных
-func (r *PgRepository) CreateYourEntity(ye entity.CompanyEntity) error {
+func (r *PgRepository) CreateEntity(ye *entity.Entity) error {
 	query := `INSERT INTO company_entity_table (name) VALUES ($1)`
 	_, err := r.DB.Exec(query, ye.Name)
 	return err
 }
-
-// Добавьте здесь другие функции репозитория
