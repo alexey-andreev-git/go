@@ -13,7 +13,7 @@ func main() {
 
 	r := router.SetupRouter()
 
-	logger.Log.Fatalf("Start server failed: %v", http.ListenAndServe(":8089", r))
+	logger.CustomLogger.Fatal("Start server failed:", http.ListenAndServe(":8089", r))
 }
 
 // initRepository initializes the repository

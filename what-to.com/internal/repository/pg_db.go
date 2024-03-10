@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	"what-to.com/internal/logger"
@@ -22,13 +21,16 @@ type DBConfig struct {
 	DBName   string
 }
 
-var config = DBConfig{
-	Host:     "localhost",
-	Port:     5432,
-	User:     "your_username",
-	Password: "your_password",
-	DBName:   "your_dbname",
-}
+var (
+	config = DBConfig{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "your_username",
+		Password: "your_password",
+		DBName:   "your_dbname",
+	}
+	log = logger.CustomLogger
+)
 
 func ConnectToDB() *sql.DB {
 	// Сначала подключаемся к базе данных `postgres` для проверки существования целевой БД
@@ -36,7 +38,7 @@ func ConnectToDB() *sql.DB {
 		config.Host, config.Port, config.User, config.Password)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatal("Failed to connect to database:", err)
 	}
 
 	// Проверяем, существует ли целевая база данных
@@ -45,11 +47,12 @@ func ConnectToDB() *sql.DB {
 
 	if exists == 0 {
 		// База данных не существует, создаем ее
+		log.Warn("Database does not exists. Creating...")
 		_, err := db.Exec(fmt.Sprintf("CREATE DATABASE \"%s\"", config.DBName))
 		if err != nil {
-			log.Fatalf("Failed to create database: %v", err)
+			log.Fatal("Failed to create database:", err)
 		}
-		fmt.Println("Database created successfully")
+		log.Info("Database created successfully.")
 	}
 
 	// Закрываем соединение с базой данных `postgres`
@@ -61,15 +64,15 @@ func ConnectToDB() *sql.DB {
 
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		logger.Log.Fatalf("Connection to the database failed: %v", err)
+		log.Fatal("Connection to the database failed:", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		logger.Log.Fatalf("Failed to execute ping on the database: %v", err)
+		log.Fatal("Failed to execute ping on the database:", err)
 	}
 
-	fmt.Println("PostgreSQL DB successfully connected!")
+	log.Info("PostgreSQL DB successfully connected!")
 	return db
 }
 
@@ -91,14 +94,14 @@ func ReadDBConfig() DBConfig {
 	// Read the YAML file
 	yamlFile, err := os.ReadFile("pg_db_connection.yaml")
 	if err != nil {
-		logger.Log.Fatalf("Error reading the configuration file: %v", err)
+		log.Fatal("Error reading the configuration file:", err)
 	}
 
 	// Parse the YAML file into a map
 	var yamlData map[string]interface{}
 	err = yaml.Unmarshal(yamlFile, &yamlData)
 	if err != nil {
-		logger.Log.Fatalf("Parsing YAML file error: %v", err)
+		log.Fatal("Parsing YAML file error:", err)
 	}
 
 	// Fill the DBConfig struct with the values from the YAML file
