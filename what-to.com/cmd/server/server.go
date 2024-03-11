@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"what-to.com/internal/config"
@@ -10,16 +11,20 @@ import (
 )
 
 func main() {
-	initApplication()
+	config.ReadConfig()
 
-	r := router.SetupRouter()
+	appRepository := repository.NewPgRepository()
+	fmt.Println(appRepository.GetRepoConfigStr())
 
-	logger.CustomLogger.Fatal("Start server failed:", http.ListenAndServe(":8089", r))
+	appRouter := router.SetupRouter()
+
+	logger.CustomLogger.Fatal("Start server failed:", http.ListenAndServe(":8089", appRouter))
 }
 
 // initRepository initializes the repository
-func initApplication() {
-	config.ReadConfig()
-	repository.SetDBConfig(config.Config["database"].(config.ConfigT))
-	repository.ConnectToDB()
-}
+// func initApplication() {
+// 	// config.ReadConfig()
+// 	// repository.SetDBConfig(config.Config["database"].(config.ConfigT))
+// 	// repository.ConnectToDB()
+// 	appRepo := repository.NewPgRepository()
+// }
