@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,23 +41,33 @@ func TestSetRepoConfig(t *testing.T) {
 	repo := &PgRepository{}
 
 	// Create a mock DBConfig
-	dbConfig := DBConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "test_user",
-		Password: "test_password",
-		DBName:   "test_db",
-	}
+	// dbConfig := DBConfig{
+	// 	Host:     "localhost",
+	// 	Port:     5432,
+	// 	User:     "test_user",
+	// 	Password: "test_password",
+	// 	DBName:   "test_db",
+	// }
 
 	// Convert dbConfig struct to map
-	configMap := make(map[string]interface{})
-	configMap["database"] = make(map[string]interface{})
-	reflectValue := reflect.ValueOf(dbConfig)
-	reflectType := reflect.TypeOf(dbConfig)
-	for i := 0; i < reflectValue.NumField(); i++ {
-		field := reflectValue.Field(i)
-		fieldName := reflectType.Field(i).Name
-		configMap["database"].(map[string]interface{})[fieldName] = field
+	// configMap := make(map[string]interface{})
+	// configMap["database"] = make(map[string]interface{})
+	// reflectValue := reflect.ValueOf(dbConfig)
+	// reflectType := reflect.TypeOf(dbConfig)
+	// for i := 0; i < reflectValue.NumField(); i++ {
+	// 	field := reflectValue.Field(i)
+	// 	fieldName := reflectType.Field(i).Name
+	// 	configMap["database"] = (map[interface{}]interface{})[fieldName] = field
+	// }
+
+	configMap := make(map[interface{}]interface{})
+
+	configMap["database"] = map[interface{}]interface{}{
+		"host":     "localhost",
+		"port":     5432,
+		"user":     "test_user",
+		"password": "test_password",
+		"dbname":   "test_db",
 	}
 
 	// Call the SetRepoConfig function
