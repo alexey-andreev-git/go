@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-	config.ReadConfig()
+	appConfig := config.NewConfig("pg_db_connection.yaml")
 
-	appRepository := repository.NewPgRepository()
+	appRepository := repository.NewPgRepository(appConfig.GetConfig())
 	fmt.Println(appRepository.GetRepoConfigStr())
 
 	appRouter := router.SetupRouter()
