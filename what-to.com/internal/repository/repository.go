@@ -7,6 +7,7 @@ import (
 
 type (
 	Repository interface {
+		ConnectToRepo()
 		SetRepoConfig(config.ConfigT)
 		GetRepoConfigStr() string
 		CreateEntity(*entity.Entity) error
