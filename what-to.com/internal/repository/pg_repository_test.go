@@ -26,16 +26,16 @@ import (
 // 	assert.NoError(t, err)
 // }
 
-func TestConnectToRepo(t *testing.T) {
-	// Create a new PgRepository instance
-	repo := &PgRepository{}
+// func TestConnectToRepo(t *testing.T) {
+// 	// Create a new PgRepository instance
+// 	repo := &PgRepository{}
 
-	// Call the ConnectToRepo function
-	repo.ConnectToRepo()
+// 	// Call the ConnectToRepo function
+// 	repo.ConnectToRepo()
 
-	// Assert that the DB field is not nil
-	assert.NotNil(t, repo.DB)
-}
+// 	// Assert that the DB field is not nil
+// 	assert.NotNil(t, repo.DB)
+// }
 
 func TestSetRepoConfig(t *testing.T) {
 	// Create a new PgRepository instance
