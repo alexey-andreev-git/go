@@ -109,3 +109,7 @@ func (r *PgRepository) GetRepoConfigStr() string {
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password)
 }
+
+func (r *PgRepository) GetRepoConfig() DBConfig {
+	return dbConfig
+}
