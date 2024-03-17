@@ -15,7 +15,7 @@ type AppSourcesInterface interface {
 
 type AppSources struct{}
 
-func NewAppSources() AppSourcesInterface {
+func NewAppSources() *AppSources {
 	return &AppSources{}
 }
 

@@ -15,7 +15,7 @@ type PgRepository struct {
 	DB *sql.DB
 }
 
-func NewPgRepository(appConfig *map[interface{}]interface{}) *PgRepository {
+func NewPgRepository(appConfig *config.ConfigT) *PgRepository {
 	r := &PgRepository{DB: nil}
 	r.SetRepoConfig((*appConfig)["database"].(config.ConfigT))
 	r.ConnectToRepo()
