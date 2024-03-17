@@ -7,11 +7,9 @@ import (
 
 type (
 	Repository interface {
-		ConnectToRepo()
 		SetRepoConfig(config.ConfigT)
 		GetRepoConfig() config.ConfigT
 		GetRepoConfigStr() string
 		CreateEntity(*entity.Entity) error
 	}
-	DataParamsT = map[interface{}]interface{}
 )

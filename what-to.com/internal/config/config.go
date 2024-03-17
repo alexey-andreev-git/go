@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -10,41 +11,56 @@ import (
 type ConfigT = map[interface{}]interface{}
 
 var (
-	log        = logger.CustomLogger
-	configFile = "pg_db_connection.yaml"
-	// Config     ConfigT
+	envConfigFile string = "pg_db_connection.yaml"
 )
 
 type Config struct {
-	configFile string // = "pg_db_connection.yaml"
-	Config     ConfigT
+	customLogger logger.Logger
+	configFile   string
+	Config       ConfigT
 }
 
-func NewConfig(confFileName string) *Config {
-	c := &Config{
-		configFile: confFileName,
-		Config:     nil,
+func init() {
+	// Define and parse command-line arguments
+	flag.StringVar(&envConfigFile, "config", envConfigFile, "path to the configuration file")
+	flag.Parse()
+
+	// Override configFile if an environment variable is set
+	if configFile := os.Getenv("WHATTO_CONFIG_FILE_PATH"); configFile != "" {
+		envConfigFile = configFile
 	}
+}
+
+func NewConfig() *Config {
+	c := &Config{
+		configFile:   envConfigFile,
+		Config:       nil,
+		customLogger: logger.NewCustomLogger("whattoapp.log"),
+	}
+	// c.log = logger.NewCustomLogger(c.configFile)
 	c.ReadConfig()
 	return c
 }
 
-func (c *Config) GetConfig() *ConfigT {
-	return &c.Config
+func (c *Config) GetConfig() ConfigT {
+	return c.Config
+}
+func (c *Config) GetLogger() logger.Logger {
+	return c.customLogger
 }
 
 func (c *Config) ReadConfig() {
 	// Read the YAML file
-	yamlFile, err := os.ReadFile(configFile)
+	yamlFile, err := os.ReadFile(c.configFile)
 	if err != nil {
-		log.Fatal("Error reading the configuration file:", err)
+		c.customLogger.Fatal("Error reading the configuration file:", err)
 	}
 
 	// Parse the YAML file into a map
 	err = yaml.Unmarshal(yamlFile, &c.Config)
 	if err != nil {
-		log.Fatal("Parsing YAML file error:", err)
+		c.customLogger.Fatal("Parsing YAML file error:", err)
 	}
 
-	log.Info("Config successfully read!")
+	c.customLogger.Info("Config successfully read!")
 }
