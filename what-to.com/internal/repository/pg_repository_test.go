@@ -74,11 +74,11 @@ func TestSetRepoConfig(t *testing.T) {
 	repo.SetRepoConfig(config.ConfigT(configMap["database"].(map[interface{}]interface{})))
 
 	// Assert that the DBConfig fields are set correctly
-	assert.Equal(t, dbConfig.Host, repo.GetRepoConfig().Host)
-	assert.Equal(t, dbConfig.Port, repo.GetRepoConfig().Port)
-	assert.Equal(t, dbConfig.User, repo.GetRepoConfig().User)
-	assert.Equal(t, dbConfig.Password, repo.GetRepoConfig().Password)
-	assert.Equal(t, dbConfig.DBName, repo.GetRepoConfig().DBName)
+	assert.Equal(t, repo.dbConfig.Host, repo.GetRepoConfig().Host)
+	assert.Equal(t, repo.dbConfig.Port, repo.GetRepoConfig().Port)
+	assert.Equal(t, repo.dbConfig.User, repo.GetRepoConfig().User)
+	assert.Equal(t, repo.dbConfig.Password, repo.GetRepoConfig().Password)
+	assert.Equal(t, repo.dbConfig.DBName, repo.GetRepoConfig().DBName)
 }
 
 // func TestGetRepoConfigStr(t *testing.T) {
