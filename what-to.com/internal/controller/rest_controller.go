@@ -19,12 +19,21 @@ func NewRestController() *RestController {
 	c.appRes = resources.NewAppSources()
 	c.httpHandlers["/entity/{rest:.*}"] = ControllerHandlerT{
 		Method:  "GET",
-		Handler: c.EntityHandler,
+		Handler: c.entityHandler,
+	}
+	c.httpHandlers["/api/{rest:.*}"] = ControllerHandlerT{
+		Method:  "GET",
+		Handler: c.apiHandler,
 	}
 	return c
 }
 
-func (c *RestController) EntityHandler(w http.ResponseWriter, r *http.Request) {
+func (c *RestController) entityHandler(w http.ResponseWriter, r *http.Request) {
+	result := service.EntityServiceFunction(r)
+	w.Write([]byte(result))
+}
+
+func (c *RestController) apiHandler(w http.ResponseWriter, r *http.Request) {
 	result := service.EntityServiceFunction(r)
 	w.Write([]byte(result))
 }
