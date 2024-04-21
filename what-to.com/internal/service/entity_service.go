@@ -1,14 +1,33 @@
 package service
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"what-to.com/internal/config"
 	"what-to.com/internal/resources"
 )
 
-// Import your_project_name/internal/repository here
+type (
+	EntityService interface {
+	}
+)
+
+func NewEntityService(appConfig *config.Config) *RestController {
+	c := &RestController{
+		httpHandlers: make(HttpHandlersT),
+	}
+	c.appRes = resources.NewAppSources()
+	c.httpHandlers["/entity/{rest:.*}"] = ControllerHandlerT{
+		Method:  "GET",
+		Handler: c.entityHandler,
+	}
+	c.httpHandlers["/api/{rest:.*}"] = ControllerHandlerT{
+		Method:  "GET",
+		Handler: c.apiHandler,
+	}
+	return c
+}
 
 func EntityServiceFunction(r *http.Request) string {
 	// Here you would call your repository functions and implement business logic
@@ -17,9 +36,9 @@ func EntityServiceFunction(r *http.Request) string {
 	rest := muxVars["rest"]
 
 	appRes := resources.NewAppSources()
-	data, err := appRes.GetRes().ReadFile("appfs/sql/initdb.sql") // this is the embed.FS
+	data, err := appRes.GetRes().ReadFile(config.initDbFileName) // this is the embed.FS
 	if err != nil {
-		log.Fatalf("Ошибка при чтении файла: %v", err)
+		config.GetLogger().Fatal("File read error", config.initDbFileName, err)
 	}
 
 	// Example: return r *http.Request as a string
