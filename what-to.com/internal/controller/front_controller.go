@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -15,11 +16,12 @@ type FrontController struct {
 	config       *config.Config
 }
 
-func NewFrontController() *FrontController {
+func NewFrontController(appConfig *config.Config) *FrontController {
 	c := &FrontController{
 		httpHandlers: make(HttpHandlersT),
 	}
 	c.appRes = resources.NewAppSources()
+	c.config = appConfig
 	c.httpHandlers["/"] = ControllerHandlerT{
 		Method:  "GET",
 		Handler: c.RootHandler,
@@ -37,7 +39,7 @@ func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 	fs := http.FS(subFS) // Convert embed.FS to http.FS
 	fileServer := http.FileServer(fs)
 	http.StripPrefix("/", fileServer).ServeHTTP(w, r)
-	c.config.GetLogger().Info("[HTTP] [%s] [%s] served frontend files. Method: " + r.Method + " Path: " + r.URL.Path)
+	c.config.GetLogger().Info(fmt.Sprintf("[HTTP] [%s] [%s] served frontend files.", r.Method, r.URL.Path))
 }
 
 func (c *FrontController) GetHandlers() HttpHandlersT {

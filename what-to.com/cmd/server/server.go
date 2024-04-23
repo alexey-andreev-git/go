@@ -17,8 +17,8 @@ func main() {
 	fmt.Println(appRepository.GetRepoConfigStr())
 
 	appRouter := router.NewEntityRouter()
-	appRouter.AddController("front", controller.NewFrontController())
-	appRouter.AddController("rest", controller.NewRestController())
+	appRouter.AddController("front", controller.NewFrontController(appConfig))
+	appRouter.AddController("rest", controller.NewRestController(appConfig))
 
 	appConfig.GetLogger().Fatal("Start server failed:", http.ListenAndServe(":8088", appRouter.GetMuxRouter()))
 }

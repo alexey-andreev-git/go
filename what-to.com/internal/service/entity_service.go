@@ -8,38 +8,22 @@ import (
 	"what-to.com/internal/resources"
 )
 
-type (
-	EntityService interface {
-		NewRestController()
-	}
+var (
+	dbMapName = "initDbFileName"
 )
 
-// func NewEntityService(appConfig *config.Config) *RestController {
-// 	c := &RestController{
-// 		httpHandlers: make(HttpHandlersT),
-// 	}
-// 	c.appRes = resources.NewAppSources()
-// 	c.httpHandlers["/entity/{rest:.*}"] = ControllerHandlerT{
-// 		Method:  "GET",
-// 		Handler: c.entityHandler,
-// 	}
-// 	c.httpHandlers["/api/{rest:.*}"] = ControllerHandlerT{
-// 		Method:  "GET",
-// 		Handler: c.apiHandler,
-// 	}
-// 	return c
-// }
-
-func EntityServiceFunction(r *http.Request, config *config.Config) string {
+func EntityServiceFunction(r *http.Request, c *config.Config) string {
 	// Here you would call your repository functions and implement business logic
 
 	muxVars := mux.Vars(r)
 	rest := muxVars["rest"]
 
 	appRes := resources.NewAppSources()
-	data, err := appRes.GetRes().ReadFile(config.InitDbFileName) // this is the embed.FS
+	// data, err := appRes.GetRes().ReadFile(c.GetConfig()["initDbFileName"]) // this is the embed.FS
+	data, err := appRes.GetRes().ReadFile(c.GetConfig()[dbMapName].(string)) // this is the embed.FS
 	if err != nil {
-		config.GetLogger().Fatal("File read error "+config.InitDbFileName, err)
+		// c.GetLogger().Fatal(fmt.Sprintf("File read error [%s] [%s]", c.GetConfig()["initDbFileName"], err))
+		c.GetLogger().Fatal("File read error [%s] "+c.GetConfig()[dbMapName].(string), err)
 	}
 
 	// Example: return r *http.Request as a string

@@ -14,7 +14,7 @@ type RestController struct {
 	config       *config.Config
 }
 
-func NewRestController() *RestController {
+func NewRestController(appConfig *config.Config) *RestController {
 	c := &RestController{
 		httpHandlers: make(HttpHandlersT),
 	}
@@ -27,6 +27,7 @@ func NewRestController() *RestController {
 		Method:  "GET",
 		Handler: c.apiHandler,
 	}
+	c.config = appConfig
 	return c
 }
 
