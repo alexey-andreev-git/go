@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 
+	"what-to.com/internal/config"
 	"what-to.com/internal/resources"
 )
 
 type FrontController struct {
 	httpHandlers HttpHandlersT
 	appRes       *resources.AppSources
+	config       *config.Config
 }
 
 func NewFrontController() *FrontController {
@@ -35,7 +37,7 @@ func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 	fs := http.FS(subFS) // Convert embed.FS to http.FS
 	fileServer := http.FileServer(fs)
 	http.StripPrefix("/", fileServer).ServeHTTP(w, r)
-	config.GetLogger().Info("[HTTP] [%s] [%s] served frontend files.", r.Method, r.URL.Path)
+	c.config.GetLogger().Info("[HTTP] [%s] [%s] served frontend files. Method: " + r.Method + " Path: " + r.URL.Path)
 }
 
 func (c *FrontController) GetHandlers() HttpHandlersT {

@@ -10,35 +10,36 @@ import (
 
 type (
 	EntityService interface {
+		NewRestController()
 	}
 )
 
-func NewEntityService(appConfig *config.Config) *RestController {
-	c := &RestController{
-		httpHandlers: make(HttpHandlersT),
-	}
-	c.appRes = resources.NewAppSources()
-	c.httpHandlers["/entity/{rest:.*}"] = ControllerHandlerT{
-		Method:  "GET",
-		Handler: c.entityHandler,
-	}
-	c.httpHandlers["/api/{rest:.*}"] = ControllerHandlerT{
-		Method:  "GET",
-		Handler: c.apiHandler,
-	}
-	return c
-}
+// func NewEntityService(appConfig *config.Config) *RestController {
+// 	c := &RestController{
+// 		httpHandlers: make(HttpHandlersT),
+// 	}
+// 	c.appRes = resources.NewAppSources()
+// 	c.httpHandlers["/entity/{rest:.*}"] = ControllerHandlerT{
+// 		Method:  "GET",
+// 		Handler: c.entityHandler,
+// 	}
+// 	c.httpHandlers["/api/{rest:.*}"] = ControllerHandlerT{
+// 		Method:  "GET",
+// 		Handler: c.apiHandler,
+// 	}
+// 	return c
+// }
 
-func EntityServiceFunction(r *http.Request) string {
+func EntityServiceFunction(r *http.Request, config *config.Config) string {
 	// Here you would call your repository functions and implement business logic
 
 	muxVars := mux.Vars(r)
 	rest := muxVars["rest"]
 
 	appRes := resources.NewAppSources()
-	data, err := appRes.GetRes().ReadFile(config.initDbFileName) // this is the embed.FS
+	data, err := appRes.GetRes().ReadFile(config.InitDbFileName) // this is the embed.FS
 	if err != nil {
-		config.GetLogger().Fatal("File read error", config.initDbFileName, err)
+		config.GetLogger().Fatal("File read error "+config.InitDbFileName, err)
 	}
 
 	// Example: return r *http.Request as a string

@@ -20,9 +20,10 @@ var (
 )
 
 type Config struct {
-	customLogger logger.Logger
-	configFile   string
-	Config       ConfigT
+	customLogger   logger.Logger
+	configFile     string
+	Config         ConfigT
+	InitDbFileName string
 }
 
 func init() {
