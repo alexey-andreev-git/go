@@ -8,10 +8,6 @@ import (
 	"what-to.com/internal/resources"
 )
 
-var (
-	dbMapName = "initDbFileName"
-)
-
 func EntityServiceFunction(r *http.Request, c *config.Config) string {
 	// Here you would call your repository functions and implement business logic
 
@@ -20,10 +16,10 @@ func EntityServiceFunction(r *http.Request, c *config.Config) string {
 
 	appRes := resources.NewAppSources()
 	// data, err := appRes.GetRes().ReadFile(c.GetConfig()["initDbFileName"]) // this is the embed.FS
-	data, err := appRes.GetRes().ReadFile(c.GetConfig()[dbMapName].(string)) // this is the embed.FS
+	data, err := appRes.GetRes().ReadFile(c.GetConfig()[config.KeyInitDbFileName].(string)) // this is the embed.FS
 	if err != nil {
 		// c.GetLogger().Fatal(fmt.Sprintf("File read error [%s] [%s]", c.GetConfig()["initDbFileName"], err))
-		c.GetLogger().Fatal("File read error [%s] "+c.GetConfig()[dbMapName].(string), err)
+		c.GetLogger().Fatal("File read error [%s] "+c.GetConfig()[config.KeyInitDbFileName].(string), err)
 	}
 
 	// Example: return r *http.Request as a string

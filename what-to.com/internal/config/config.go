@@ -11,7 +11,8 @@ import (
 type ConfigT = map[interface{}]interface{}
 
 const (
-	initDbFileName     = "appfs/sql/initdb.sql"
+	InitDbFileName     = "appfs/sql/initdb.sql"
+	KeyInitDbFileName  = "initDbFileName"
 	initConfigFileName = "pg_db_connection.yaml"
 )
 
@@ -71,6 +72,6 @@ func (c *Config) ReadConfig() {
 		c.customLogger.Fatal("Parsing YAML file error:", err)
 	}
 	c.cConfig["configFileName"] = c.configFile
-	c.cConfig["initDbFileName"] = initDbFileName
+	c.cConfig[KeyInitDbFileName] = InitDbFileName
 	c.customLogger.Info("Config successfully read!")
 }
