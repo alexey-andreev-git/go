@@ -72,7 +72,11 @@ func (c *Config) ReadConfig() {
 	if err != nil {
 		c.customLogger.Fatal("Parsing YAML file error:", err)
 	}
+
+	// Add calculated parameters to the YAML file into a map
 	c.cConfig[KeyInitConfigFileName] = c.configFile
 	c.cConfig[KeyInitDbFileName] = InitDbFileName
+
+	// Report the YAML map created
 	c.customLogger.Info("Config successfully read!")
 }
