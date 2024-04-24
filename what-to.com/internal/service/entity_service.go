@@ -15,11 +15,10 @@ func EntityServiceFunction(r *http.Request, c *config.Config) string {
 	rest := muxVars["rest"]
 
 	appRes := resources.NewAppSources()
-	// data, err := appRes.GetRes().ReadFile(c.GetConfig()["initDbFileName"]) // this is the embed.FS
-	data, err := appRes.GetRes().ReadFile(c.GetConfig()[config.KeyInitDbFileName].(string)) // this is the embed.FS
+	fn := c.GetConfig()[config.KeyInitDbFileName].(string)
+	data, err := appRes.GetRes().ReadFile(fn) // this is the embed.FS
 	if err != nil {
-		// c.GetLogger().Fatal(fmt.Sprintf("File read error [%s] [%s]", c.GetConfig()["initDbFileName"], err))
-		c.GetLogger().Fatal("File read error [%s] "+c.GetConfig()[config.KeyInitDbFileName].(string), err)
+		c.GetLogger().Fatal("File read error [%s] "+fn, err)
 	}
 
 	// Example: return r *http.Request as a string
