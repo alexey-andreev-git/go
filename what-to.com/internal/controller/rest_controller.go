@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"what-to.com/internal/config"
 	"what-to.com/internal/resources"
 	"what-to.com/internal/service"
 )
@@ -10,9 +11,10 @@ import (
 type RestController struct {
 	httpHandlers HttpHandlersT
 	appRes       *resources.AppSources
+	config       *config.Config
 }
 
-func NewRestController() *RestController {
+func NewRestController(appConfig *config.Config) *RestController {
 	c := &RestController{
 		httpHandlers: make(HttpHandlersT),
 	}
@@ -25,16 +27,17 @@ func NewRestController() *RestController {
 		Method:  "GET",
 		Handler: c.apiHandler,
 	}
+	c.config = appConfig
 	return c
 }
 
 func (c *RestController) entityHandler(w http.ResponseWriter, r *http.Request) {
-	result := service.EntityServiceFunction(r)
+	result := service.EntityServiceFunction(r, c.config)
 	w.Write([]byte(result))
 }
 
 func (c *RestController) apiHandler(w http.ResponseWriter, r *http.Request) {
-	result := service.EntityServiceFunction(r)
+	result := service.EntityServiceFunction(r, c.config)
 	w.Write([]byte(result))
 }
 
