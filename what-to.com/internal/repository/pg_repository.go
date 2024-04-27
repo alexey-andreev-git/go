@@ -102,9 +102,27 @@ func (r *PgRepository) GetRepoConfig() DBConfig {
 	return r.dbConfig
 }
 
-// Пример функции для добавления новой сущности в базу данных
+// Function for adding a new entity to the database
 func (r *PgRepository) CreateEntity(ye *entity.Entity) error {
 	query := `INSERT INTO company_entity_table (name) VALUES ($1)`
 	_, err := r.DB.Exec(query, ye.Name)
 	return err
+}
+
+// Check DB and create tables if not exists
+func (r *PgRepository) CheckDB() {
+	// Check if the table exists
+	_, err := r.DB.Exec(`SELECT 1 FROM company_entity_table LIMIT 1`)
+	if err != nil {
+		// Table does not exist, create it
+		r.appConfig.GetLogger().Warn("Table does not exist. Creating...")
+		_, err := r.DB.Exec(`CREATE TABLE company_entity_table (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(100) NOT NULL
+		)`)
+		if err != nil {
+			r.appConfig.GetLogger().Fatal("Failed to create table:", err)
+		}
+		r.appConfig.GetLogger().Info("Table created successfully.")
+	}
 }
