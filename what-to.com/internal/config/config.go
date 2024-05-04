@@ -15,10 +15,13 @@ const (
 	KeyInitDbFileName     = "initDbFileName" //Key in the config map
 	InitConfigFileName    = "pg_db_connection.yaml"
 	KeyInitConfigFileName = "configFileName" //Key in the config map
+	InitLogFileName       = "whattoapp.log"
+	KeyInitLogFileName    = "logFileName" //Key in the config map
 )
 
 var (
-	envConfigFile string = InitConfigFileName
+	envConfigFile string = InitConfigFileName // Default value from const
+	envLogFile    string = InitLogFileName    // Default value from const
 )
 
 type Config struct {
@@ -32,12 +35,20 @@ func init() {
 	flag.StringVar(&envConfigFile, "config", envConfigFile, "path to the configuration file")
 	flag.Parse()
 
+	flag.StringVar(&envLogFile, "log", envLogFile, "path to the log file")
+	flag.Parse()
+
 	// Override configFile if an environment variable is set
 	if envConfigFile == "" {
+		// Checking the environment variable in case the flag is not set
 		if configFile := os.Getenv("WHATTO_CONFIG_FILE_PATH"); configFile != "" {
 			envConfigFile = configFile
-		} else {
-			envConfigFile = InitConfigFileName
+		}
+	}
+	if envLogFile == "" {
+		// Checking the environment variable in case the flag is not set
+		if logFile := os.Getenv("WHATTO_LOG_FILE_PATH"); logFile != "" {
+			envLogFile = logFile
 		}
 	}
 }
@@ -46,9 +57,8 @@ func NewConfig() *Config {
 	c := &Config{
 		configFile:   envConfigFile,
 		cConfig:      nil,
-		customLogger: logger.NewCustomLogger("whattoapp.log"),
+		customLogger: logger.NewCustomLogger(envLogFile),
 	}
-	// c.log = logger.NewCustomLogger(c.configFile)
 	c.ReadConfig()
 	return c
 }
@@ -76,6 +86,7 @@ func (c *Config) ReadConfig() {
 	// Add calculated parameters to the YAML file into a map
 	c.cConfig[KeyInitConfigFileName] = c.configFile
 	c.cConfig[KeyInitDbFileName] = InitDbFileName
+	c.cConfig[KeyInitLogFileName] = envLogFile
 
 	// Report the YAML map created
 	c.customLogger.Info("Config successfully read!")
