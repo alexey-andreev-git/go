@@ -6,6 +6,7 @@ import (
 
 	"what-to.com/internal/config"
 	"what-to.com/internal/entity"
+	"what-to.com/internal/resources"
 
 	_ "github.com/lib/pq"
 )
@@ -39,36 +40,12 @@ func NewPgRepository(appConfig *config.Config) *PgRepository {
 
 // ConnectToDB connects to the database
 func (r *PgRepository) connectToDb() {
-	// Сначала подключаемся к базе данных `postgres` для проверки существования целевой БД
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable",
-		r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		r.appConfig.GetLogger().Fatal("Failed to connect to database:", err)
-	}
-
-	// Проверяем, существует ли целевая база данных
-	var exists int
-	db.QueryRow("SELECT 1 FROM pg_database WHERE datname=$1", r.dbConfig.DBName).Scan(&exists)
-
-	if exists == 0 {
-		// База данных не существует, создаем ее
-		r.appConfig.GetLogger().Warn("Database does not exists. Creating...")
-		_, err := db.Exec(fmt.Sprintf("CREATE DATABASE \"%s\"", r.dbConfig.DBName))
-		if err != nil {
-			r.appConfig.GetLogger().Fatal("Failed to create database:", err)
-		}
-		r.appConfig.GetLogger().Info("Database created successfully.")
-	}
-
-	// Закрываем соединение с базой данных `postgres`
-	db.Close()
-
-	psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password, r.dbConfig.DBName)
 
-	db, err = sql.Open("postgres", psqlInfo)
+	r.CheckDB()
+
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		r.appConfig.GetLogger().Fatal("Connection to the database failed:", err)
 	}
@@ -80,6 +57,7 @@ func (r *PgRepository) connectToDb() {
 
 	r.appConfig.GetLogger().Info("PostgreSQL DB successfully connected!")
 	r.DB = db
+	r.UpdateDB()
 }
 
 // SetDBConfig sets the DBConfig struct
@@ -102,27 +80,53 @@ func (r *PgRepository) GetRepoConfig() DBConfig {
 	return r.dbConfig
 }
 
-// Function for adding a new entity to the database
+// Пример функции для добавления новой сущности в базу данных
 func (r *PgRepository) CreateEntity(ye *entity.Entity) error {
 	query := `INSERT INTO company_entity_table (name) VALUES ($1)`
 	_, err := r.DB.Exec(query, ye.Name)
 	return err
 }
 
-// Check DB and create tables if not exists
-func (r *PgRepository) CheckDB() {
-	// Check if the table exists
-	_, err := r.DB.Exec(`SELECT 1 FROM company_entity_table LIMIT 1`)
+// Check if db is present
+func (r *PgRepository) CheckDB() bool {
+	// Сначала подключаемся к базе данных `postgres` для проверки существования целевой БД
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable",
+		r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		// Table does not exist, create it
-		r.appConfig.GetLogger().Warn("Table does not exist. Creating...")
-		_, err := r.DB.Exec(`CREATE TABLE company_entity_table (
-			id SERIAL PRIMARY KEY,
-			name VARCHAR(100) NOT NULL
-		)`)
+		r.appConfig.GetLogger().Fatal("Failed to connect to database:", err)
+	}
+	// Закрываем соединение с базой данных `postgres`
+	defer db.Close()
+
+	// Проверяем, существует ли целевая база данных
+	var exists int
+	db.QueryRow("SELECT 1 FROM pg_database WHERE datname=$1", r.dbConfig.DBName).Scan(&exists)
+
+	if exists == 0 {
+		// База данных не существует, создаем ее
+		r.appConfig.GetLogger().Warn("Database does not exists. Creating...")
+		_, err := db.Exec(fmt.Sprintf("CREATE DATABASE \"%s\"", r.dbConfig.DBName))
 		if err != nil {
-			r.appConfig.GetLogger().Fatal("Failed to create table:", err)
+			r.appConfig.GetLogger().Fatal("Failed to create database:", err)
 		}
-		r.appConfig.GetLogger().Info("Table created successfully.")
+		r.appConfig.GetLogger().Info("Database created successfully.")
+	}
+
+	return true
+}
+
+// Update DB and create tables if not exists
+func (r *PgRepository) UpdateDB() {
+	// Check if the table exists
+	appRes := resources.NewAppSources()
+	fn := r.appConfig.GetConfig()[config.KeyInitDbFileName].(string)
+	data, err := appRes.GetRes().ReadFile(fn) // this is the embed.FS
+	if err != nil {
+		r.appConfig.GetLogger().Fatal("File read error [%s] "+fn, err)
+	}
+	_, err = r.DB.Exec(string(data))
+	if err != nil {
+		r.appConfig.GetLogger().Fatal("Failed to updae database:", err)
 	}
 }
