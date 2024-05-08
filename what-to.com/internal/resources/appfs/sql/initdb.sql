@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS entities (
     comment VARCHAR(256) NOT NULL
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities.id IS 'entity''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities.reference IS 'entity''s reference';
-COMMENT ON COLUMN IF NOT EXISTS entities.comment IS 'entity''s comment';
+COMMENT ON COLUMN entities.id IS 'entity''s id';
+COMMENT ON COLUMN entities.reference IS 'entity''s reference';
+COMMENT ON COLUMN entities.comment IS 'entity''s comment';
 
 CREATE TABLE IF NOT EXISTS entities_data (
   entity INT NOT NULL,
@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS entities_data (
   PRIMARY KEY (entity, entity_order)
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities_data.entity IS 'object''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_data.entity_order IS 'data order';
-COMMENT ON COLUMN IF NOT EXISTS entities_data.value IS 'data''s value';
+COMMENT ON COLUMN entities_data.entity IS 'object''s id';
+COMMENT ON COLUMN entities_data.entity_order IS 'data order';
+COMMENT ON COLUMN entities_data.value IS 'data''s value';
 
 CREATE TABLE IF NOT EXISTS entities_data_ref (
   entity_ref INT NOT NULL,
@@ -28,19 +28,19 @@ CREATE TABLE IF NOT EXISTS entities_data_ref (
   PRIMARY KEY (entity_ref, entity_data_ref_order)
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities_data_ref.entity_ref IS 'entity reference''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_ref.entity_data_ref_order IS 'data order in entity';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_ref.name IS 'data name';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_ref.type IS 'data type';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_ref.comment IS 'comment for data';
+COMMENT ON COLUMN entities_data_ref.entity_ref IS 'entity reference''s id';
+COMMENT ON COLUMN entities_data_ref.entity_data_ref_order IS 'data order in entity';
+COMMENT ON COLUMN entities_data_ref.name IS 'data name';
+COMMENT ON COLUMN entities_data_ref.type IS 'data type';
+COMMENT ON COLUMN entities_data_ref.comment IS 'comment for data';
 
 CREATE TABLE IF NOT EXISTS entities_data_val_char (
   id SERIAL PRIMARY KEY,
   value varchar(2048) NOT NULL
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_char.id IS 'value''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_char.value IS 'value';
+COMMENT ON COLUMN entities_data_val_char.id IS 'value''s id';
+COMMENT ON COLUMN entities_data_val_char.value IS 'value';
 
 CREATE TABLE IF NOT EXISTS entities_data_val_float (
   id SERIAL PRIMARY KEY,
@@ -48,24 +48,24 @@ CREATE TABLE IF NOT EXISTS entities_data_val_float (
 );
 
 
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_float.id IS 'value''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_float.value IS 'data''s value';
+COMMENT ON COLUMN entities_data_val_float.id IS 'value''s id';
+COMMENT ON COLUMN entities_data_val_float.value IS 'data''s value';
 
 CREATE TABLE IF NOT EXISTS entities_data_val_float (
   id SERIAL PRIMARY KEY,
   value double NOT NULL
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_float.id IS 'value''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_float.value IS 'data''s value';
+COMMENT ON COLUMN entities_data_val_float.id IS 'value''s id';
+COMMENT ON COLUMN entities_data_val_float.value IS 'data''s value';
 
 CREATE TABLE IF NOT EXISTS entities_data_val_time (
   id SERIAL PRIMARY KEY,
   value timestamp NOT NULL
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_time.id IS 'value''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_data_val_time.value IS 'value';
+COMMENT ON COLUMN entities_data_val_time.id IS 'value''s id';
+COMMENT ON COLUMN entities_data_val_time.value IS 'value';
 
 CREATE TABLE IF NOT EXISTS entities_ref (
   id SERIAL PRIMARY KEY,
@@ -74,6 +74,6 @@ CREATE TABLE IF NOT EXISTS entities_ref (
   UNIQUE(entities_ref_name)
 );
 
-COMMENT ON COLUMN IF NOT EXISTS entities_ref.id IS 'reference''s id';
-COMMENT ON COLUMN IF NOT EXISTS entities_ref.entities_ref_name IS 'reference''s name';
-COMMENT ON COLUMN IF NOT EXISTS entities_ref.entities_ref_comment IS 'comment';
+COMMENT ON COLUMN entities_ref.id IS 'reference''s id';
+COMMENT ON COLUMN entities_ref.entities_ref_name IS 'reference''s name';
+COMMENT ON COLUMN entities_ref.entities_ref_comment IS 'comment';
