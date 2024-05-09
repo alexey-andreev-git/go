@@ -1,3 +1,5 @@
+http:
+  port: 8088
 database:
   host: "localhost"
   port: 5432

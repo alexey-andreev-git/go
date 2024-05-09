@@ -30,6 +30,7 @@ func NewFrontController(appConfig *config.Config) *FrontController {
 }
 
 func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
+	c.config.GetLogger().Info(fmt.Sprintf("Start HTTP handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
 	c.appRes = resources.NewAppSources()
 	// Create a sub-filesystem that points to 'appfs/frontend'.
 	subFS, err := fs.Sub(c.appRes.GetRes(), "appfs/frontend")
@@ -40,6 +41,7 @@ func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 	fileServer := http.FileServer(fs)
 	http.StripPrefix("/", fileServer).ServeHTTP(w, r)
 	c.config.GetLogger().Info(fmt.Sprintf("[HTTP] [%s] [%s] served frontend files.", r.Method, r.URL.Path))
+	c.config.GetLogger().Info(fmt.Sprintf("Finish HTTP handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
 }
 
 func (c *FrontController) GetHandlers() HttpHandlersT {
