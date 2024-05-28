@@ -8,8 +8,14 @@ import (
 type (
 	Repository interface {
 		SetRepoConfig(config.ConfigT)
-		GetRepoConfig() config.ConfigT
+		GetRepoConfig() DBConfig
 		GetRepoConfigStr() string
-		CreateEntity(*entity.Entity) error
+		CreateEntity(map[string]string) (entity.Entity, error)
+		GetEntity(map[string]string) (entity.Entity, error)
+		UpdateEntity(int, map[string]string) error
+		DeleteEntity(int) error
+		// GetEntityBy(interface{}) ([]entity.Entity, error)
+		// GetEntityById(int) ([]entity.Entity, error)
+		// GetEntityByName(string) ([]entity.Entity, error)
 	}
 )

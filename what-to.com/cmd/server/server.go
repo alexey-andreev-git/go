@@ -13,17 +13,17 @@ import (
 	"what-to.com/internal/logger"
 	"what-to.com/internal/repository"
 	"what-to.com/internal/router"
+	"what-to.com/internal/service"
 )
 
 func main() {
 	appConfig := config.NewConfig()
-
 	appRepository := repository.NewPgRepository(appConfig)
 	fmt.Println(appRepository.GetRepoConfigStr())
-
 	appRouter := router.NewEntityRouter()
+	appService := service.NewEntityService(appConfig, appRepository)
 	appRouter.AddController("front", controller.NewFrontController(appConfig))
-	appRouter.AddController("rest", controller.NewRestController(appConfig))
+	appRouter.AddController("rest", controller.NewRestController(appConfig, appService))
 
 	httpConfig := appConfig.GetConfig()["http"].(config.ConfigT)
 	server := &http.Server{
@@ -31,8 +31,6 @@ func main() {
 		Handler: appRouter.GetMuxRouter(),                     // Http handlers here.
 	}
 	startServer(server, appConfig.GetLogger())
-
-	// appConfig.GetLogger().Fatal("Start server failed:", http.ListenAndServe(":8088", appRouter.GetMuxRouter()))
 }
 
 func startServer(server *http.Server, clogger logger.Logger) {

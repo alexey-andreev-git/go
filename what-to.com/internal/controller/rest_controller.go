@@ -5,45 +5,66 @@ import (
 	"net/http"
 
 	"what-to.com/internal/config"
-	"what-to.com/internal/resources"
 	"what-to.com/internal/service"
 )
 
 type RestController struct {
 	httpHandlers HttpHandlersT
-	appRes       *resources.AppSources
 	config       *config.Config
+	appService   service.Service
 }
 
-func NewRestController(appConfig *config.Config) *RestController {
+func NewRestController(appConfig *config.Config, appService service.Service) *RestController {
 	c := &RestController{
 		httpHandlers: make(HttpHandlersT),
+		config:       appConfig,
+		appService:   appService,
 	}
-	c.appRes = resources.NewAppSources()
-	c.httpHandlers["/entity/{rest:.*}"] = ControllerHandlerT{
+	c.httpHandlers["entity_get"] = ControllerHandlerT{
 		Method:  "GET",
-		Handler: c.entityHandler,
+		Handler: c.entityV1GetHandler,
+		Path:    "/api/v1/entity/{rest:.*}",
 	}
-	c.httpHandlers["/api/{rest:.*}"] = ControllerHandlerT{
-		Method:  "GET",
-		Handler: c.apiHandler,
+	c.httpHandlers["entity_post"] = ControllerHandlerT{
+		Method:  "POST",
+		Handler: c.entityV1PostHandler,
+		Path:    "/api/v1/entity/{rest:.*}",
 	}
-	c.config = appConfig
+	c.httpHandlers["entity_put"] = ControllerHandlerT{
+		Method:  "PUT",
+		Handler: c.entityV1PutHandler,
+		Path:    "/api/v1/entity/{rest:.*}",
+	}
+	c.httpHandlers["entity_delete"] = ControllerHandlerT{
+		Method:  "DELETE",
+		Handler: c.entityV1DeleteHandler,
+		Path:    "/api/v1/entity/{rest:.*}",
+	}
 	return c
 }
 
-func (c *RestController) entityHandler(w http.ResponseWriter, r *http.Request) {
+func (c *RestController) entityV1GetHandler(w http.ResponseWriter, r *http.Request) {
 	c.config.GetLogger().Info(fmt.Sprintf("Start entity handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
-	result := service.EntityServiceFunction(r, c.config)
-	w.Write([]byte(result))
+	c.appService.EntityServiceFunctionGet(w, r, "1")
 	c.config.GetLogger().Info(fmt.Sprintf("Finish entity handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
 }
 
-func (c *RestController) apiHandler(w http.ResponseWriter, r *http.Request) {
-	c.config.GetLogger().Info(fmt.Sprintf("Start api handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
-	result := service.EntityServiceFunction(r, c.config)
-	w.Write([]byte(result))
-	c.config.GetLogger().Info(fmt.Sprintf("Finish api handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
+func (c *RestController) entityV1PostHandler(w http.ResponseWriter, r *http.Request) {
+	c.config.GetLogger().Info(fmt.Sprintf("Start API handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
+	c.appService.EntityServiceFunctionPost(w, r, "1")
+	c.config.GetLogger().Info(fmt.Sprintf("Finish API handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
+}
+
+func (c *RestController) entityV1PutHandler(w http.ResponseWriter, r *http.Request) {
+	c.config.GetLogger().Info(fmt.Sprintf("Start API handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
+	c.appService.EntityServiceFunctionPut(w, r, "1")
+	c.config.GetLogger().Info(fmt.Sprintf("Finish API handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
+}
+
+func (c *RestController) entityV1DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	c.config.GetLogger().Info(fmt.Sprintf("Start API handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
+	c.appService.EntityServiceFunctionDelete(w, r, "1")
+	c.config.GetLogger().Info(fmt.Sprintf("Finish API handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
 }
 
 func (c *RestController) GetHandlers() HttpHandlersT {

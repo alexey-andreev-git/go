@@ -32,7 +32,7 @@ func initStdLogger(fn string) *log.Logger {
 }
 
 func getLocationInfo() string {
-	_, file, line, ok := runtime.Caller(2) // Caller(1) вернет информацию о том, кто вызвал Info
+	_, file, line, ok := runtime.Caller(2) // Caller(1) will return information about the caller of Info
 	if !ok {
 		file = "???"
 		line = 0
@@ -59,4 +59,9 @@ func (l *CustomLogger) Debug(str string) {
 
 func (l *CustomLogger) Warn(str string) {
 	l.stdLogger.Printf("[WARN] %s %s", getLocationInfo(), str)
+}
+
+// Add the Error method
+func (l *CustomLogger) Error(str string, err error) {
+	l.stdLogger.Printf("[ERROR] %s %s %v", getLocationInfo(), str, err)
 }

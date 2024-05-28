@@ -22,8 +22,8 @@ func NewEntityRouter() *EntityRouter {
 func (r *EntityRouter) AddController(n string, c controller.Controller) {
 	r.entityControllers[n] = c
 
-	for path, handler := range c.GetHandlers() {
-		r.muxRouter.HandleFunc(path, handler.Handler).Methods(handler.Method)
+	for _, handler := range c.GetHandlers() {
+		r.muxRouter.HandleFunc(handler.Path, handler.Handler).Methods(handler.Method)
 	}
 
 }
