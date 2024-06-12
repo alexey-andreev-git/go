@@ -9,6 +9,7 @@ type (
 	ControllerHandlerT struct {
 		Method  string
 		Handler http.HandlerFunc
+		Path    string
 		// config  *config.Config
 	}
 	// HttpHandlersT is a map of path string to ControllerHandlerT

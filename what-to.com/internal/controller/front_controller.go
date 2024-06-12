@@ -3,7 +3,6 @@ package controller
 import (
 	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
 
 	"what-to.com/internal/config"
@@ -19,26 +18,26 @@ type FrontController struct {
 func NewFrontController(appConfig *config.Config) *FrontController {
 	c := &FrontController{
 		httpHandlers: make(HttpHandlersT),
+		appRes:       resources.NewAppSources(),
+		config:       appConfig,
 	}
-	c.appRes = resources.NewAppSources()
-	c.config = appConfig
-	c.httpHandlers["/"] = ControllerHandlerT{
+	c.httpHandlers["front_root"] = ControllerHandlerT{
 		Method:  "GET",
 		Handler: c.RootHandler,
+		Path:    "/",
 	}
 	return c
 }
 
 func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 	c.config.GetLogger().Info(fmt.Sprintf("Start HTTP handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
-	c.appRes = resources.NewAppSources()
-	// Create a sub-filesystem that points to 'appfs/frontend'.
 	subFS, err := fs.Sub(c.appRes.GetRes(), "appfs/frontend")
 	if err != nil {
-		log.Fatal("Error readin embeded FS for HTTP", err)
+		c.config.GetLogger().Error("Error reading embedded FS for HTTP", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
-	fs := http.FS(subFS) // Convert embed.FS to http.FS
-	fileServer := http.FileServer(fs)
+	fileServer := http.FileServer(http.FS(subFS))
 	http.StripPrefix("/", fileServer).ServeHTTP(w, r)
 	c.config.GetLogger().Info(fmt.Sprintf("[HTTP] [%s] [%s] served frontend files.", r.Method, r.URL.Path))
 	c.config.GetLogger().Info(fmt.Sprintf("Finish HTTP handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
