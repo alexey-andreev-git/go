@@ -21,9 +21,10 @@ func NewFrontController(appConfig *config.Config) *FrontController {
 		appRes:       resources.NewAppSources(),
 		config:       appConfig,
 	}
-	c.httpHandlers["/"] = ControllerHandlerT{
+	c.httpHandlers["front_root"] = ControllerHandlerT{
 		Method:  "GET",
 		Handler: c.RootHandler,
+		Path:    "/",
 	}
 	return c
 }

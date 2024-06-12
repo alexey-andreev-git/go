@@ -15,8 +15,18 @@ import (
 const (
 	ENTITY_CREATE = `INSERT INTO entities (entity_name, entity_comment) VALUES ($1, $2) RETURNING entity_id`
 	ENTITY_GET    = `SELECT entity_id, entity_name, entity_comment FROM entities`
-	ENTITY_UPDATE = `UPDATE entities SET entity_name=$1, entity_comment=$2 WHERE entity_id=$3`
+	ENTITY_UPDATE = `UPDATE entities SET %s WHERE entity_id=$%d`
 	ENTITY_DELETE = `DELETE FROM entities WHERE entity_id=$1`
+
+	ENTITY_DATA_CREATE = `INSERT INTO entities_data (entities_data_entity, entities_data_order, entities_data_value) VALUES ($1, $2, $3)`
+	ENTITY_DATA_GET    = `SELECT entities_data_entity, entities_data_order, entities_data_value FROM entities_data`
+	ENTITY_DATA_UPDATE = `UPDATE entities_data SET %s WHERE entities_data_entity=$%d AND entities_data_order=$%d`
+	ENTITY_DATA_DELETE = `DELETE FROM entities_data WHERE entities_data_entity=$1 AND entities_data_order=$2`
+
+	ENTITY_DATA_REF_CREATE = `INSERT INTO entities_data_reference (entities_data_reference_entity, entities_data_reference_order, entities_data_reference_name, entities_data_reference_type, entities_data_reference_comment) VALUES ($1, $2, $3, $4, $5)`
+	ENTITY_DATA_REF_GET    = `SELECT entities_data_reference_entity, entities_data_reference_order, entities_data_reference_name, entities_data_reference_type, entities_data_reference_comment FROM entities_data_reference`
+	ENTITY_DATA_REF_UPDATE = `UPDATE entities_data_reference SET %s WHERE entities_data_reference_entity=$%d AND entities_data_reference_order=$%d`
+	ENTITY_DATA_REF_DELETE = `DELETE FROM entities_data_reference WHERE entities_data_reference_entity=$1 AND entities_data_reference_order=$2`
 )
 
 type (
@@ -41,6 +51,20 @@ var entityFieldToColumn = map[string]string{
 	"id":      "entity_id",
 	"name":    "entity_name",
 	"comment": "entity_comment",
+}
+
+var entityDataFieldToColumn = map[string]string{
+	"entity": "entities_data_entity",
+	"order":  "entities_data_order",
+	"value":  "entities_data_value",
+}
+
+var entityDataRefFieldToColumn = map[string]string{
+	"entity":  "entities_data_reference_entity",
+	"order":   "entities_data_reference_order",
+	"name":    "entities_data_reference_name",
+	"type":    "entities_data_reference_type",
+	"comment": "entities_data_reference_comment",
 }
 
 // NewPgRepository initializes a new PostgreSQL repository
@@ -138,18 +162,18 @@ func (r *PgRepository) UpdateDB() {
 }
 
 // CreateEntity creates a new entity in the database
-func (r *PgRepository) CreateEntity(ent map[string]string) (entity.Entity, error) {
+func (r *PgRepository) CreateEntity(ent map[string]interface{}) (entity.Entity, error) {
 	createdEntity := entity.Entity{
 		Id:      0,
-		Name:    ent["Name"],
-		Comment: ent["Comment"],
+		Name:    ent["Name"].(string),
+		Comment: ent["Comment"].(string),
 	}
 	err := r.DB.QueryRow(ENTITY_CREATE, ent["Name"], ent["Comment"]).Scan(&createdEntity.Id)
 	return createdEntity, err
 }
 
 // GetEntity retrieves an entity from the database based on the given filter
-func (r *PgRepository) GetEntity(filter map[string]string) (entity.Entity, error) {
+func (r *PgRepository) GetEntity(filter map[string]interface{}) (entity.Entity, error) {
 	var conditions []string
 	var args []interface{}
 	i := 1
@@ -192,12 +216,251 @@ func (r *PgRepository) GetEntity(filter map[string]string) (entity.Entity, error
 	return entities[0], nil
 }
 
-func (r *PgRepository) UpdateEntity(id int, ent map[string]string) error {
-	_, err := r.DB.Exec(ENTITY_UPDATE, ent["Name"], ent["Comment"], id)
-	return err
+// UpdateEntity updates an entity in the database
+func (r *PgRepository) UpdateEntity(ent map[string]interface{}) (sql.Result, error) {
+	idStr, ok := ent["Id"]
+	if !ok {
+		return nil, fmt.Errorf("missing entity id")
+	}
+	var setClauses []string
+	var args []interface{}
+	i := 1
+	for key, value := range ent {
+		if key == "Id" {
+			continue
+		}
+		column, ok := entityFieldToColumn[strings.ToLower(key)]
+		if !ok {
+			return nil, fmt.Errorf("invalid field: %s", key)
+		}
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", column, i))
+		args = append(args, value)
+		i++
+	}
+
+	if len(setClauses) == 0 {
+		return nil, fmt.Errorf("no fields to update")
+	}
+
+	query := fmt.Sprintf(ENTITY_UPDATE, strings.Join(setClauses, ", "), i)
+	args = append(args, idStr)
+
+	result, err := r.DB.Exec(query, args...)
+	return result, err
 }
 
-func (r *PgRepository) DeleteEntity(id int) error {
-	_, err := r.DB.Exec(ENTITY_DELETE, id)
-	return err
+// DeleteEntity deletes an entity from the database
+func (r *PgRepository) DeleteEntity(ent map[string]interface{}) (sql.Result, error) {
+	idStr, ok := ent["Id"]
+	if !ok {
+		return nil, fmt.Errorf("missing entity id")
+	}
+	result, err := r.DB.Exec(ENTITY_DELETE, idStr)
+	return result, err
+}
+
+// CreateEntityData creates a new entity_data in the database
+func (r *PgRepository) CreateEntityData(data map[string]interface{}) ([]entity.EntityData, error) {
+	createdData := []entity.EntityData{
+		{
+			Entity: data["Entity"].(int),
+			Order:  data["Order"].(int),
+			Value:  data["Value"].(int),
+		},
+	}
+	response, err := r.DB.Exec(ENTITY_DATA_CREATE, data["Entity"], data["Order"], data["Value"])
+	ent, rerr := response.LastInsertId()
+	if rerr != nil {
+		return createdData, rerr
+	}
+	createdData[0].Entity = int(ent)
+	return createdData, err
+}
+
+// GetEntityData retrieves an entity_data from the database based on the given filter
+func (r *PgRepository) GetEntityData(filter map[string]interface{}) ([]entity.EntityData, error) {
+	var conditions []string
+	var args []interface{}
+	i := 1
+	for key, value := range filter {
+		column, ok := entityDataFieldToColumn[strings.ToLower(key)]
+		if !ok {
+			return nil, fmt.Errorf("invalid field: %s", key)
+		}
+		conditions = append(conditions, fmt.Sprintf("%s = $%d", column, i))
+		args = append(args, value)
+		i++
+	}
+	query := ENTITY_DATA_GET
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	rows, err := r.DB.Query(query, args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entityData []entity.EntityData
+	for rows.Next() {
+		var ed entity.EntityData
+		if err := rows.Scan(&ed.Entity, &ed.Order, &ed.Value); err != nil {
+			return nil, err
+		}
+		entityData = append(entityData, ed)
+	}
+	if len(entityData) == 0 {
+		return nil, fmt.Errorf("entity_data not found")
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return entityData, nil
+}
+
+// UpdateEntityData updates an entity_data in the database
+func (r *PgRepository) UpdateEntityData(data map[string]interface{}) (sql.Result, error) {
+	entityStr, entityOk := data["Entity"]
+	orderStr, orderOk := data["Order"]
+	if !entityOk || !orderOk {
+		return nil, fmt.Errorf("missing entity_data entity or order")
+	}
+	var setClauses []string
+	var args []interface{}
+	i := 1
+	for key, value := range data {
+		if key == "Entity" || key == "Order" {
+			continue
+		}
+		column, ok := entityDataFieldToColumn[strings.ToLower(key)]
+		if !ok {
+			return nil, fmt.Errorf("invalid field: %s", key)
+		}
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", column, i))
+		args = append(args, value)
+		i++
+	}
+
+	if len(setClauses) == 0 {
+		return nil, fmt.Errorf("no fields to update")
+	}
+
+	query := fmt.Sprintf(ENTITY_DATA_UPDATE, strings.Join(setClauses, ", "), i, i+1)
+	args = append(args, entityStr, orderStr)
+
+	result, err := r.DB.Exec(query, args...)
+	return result, err
+}
+
+// DeleteEntityData deletes an entity_data from the database
+func (r *PgRepository) DeleteEntityData(data map[string]interface{}) (sql.Result, error) {
+	entityStr, entityOk := data["Entity"]
+	orderStr, orderOk := data["Order"]
+	if !entityOk || !orderOk {
+		return nil, fmt.Errorf("missing entity_data entity or order")
+	}
+	result, err := r.DB.Exec(ENTITY_DATA_DELETE, entityStr, orderStr)
+	return result, err
+}
+
+// CreateEntityDataRef creates a new entity_data_reference in the database
+func (r *PgRepository) CreateEntityDataRef(ref map[string]interface{}) ([]entity.EntityDataReference, error) {
+	createdRef := []entity.EntityDataReference{
+		{
+			Entity:  ref["Entity"].(int),
+			Order:   ref["Order"].(int),
+			Name:    ref["Name"].(string),
+			Type:    ref["Type"].(string),
+			Comment: ref["Comment"].(string),
+		},
+	}
+	_, err := r.DB.Exec(ENTITY_DATA_REF_CREATE, ref["Entity"], ref["Order"], ref["Name"], ref["Type"], ref["Comment"])
+	return createdRef, err
+}
+
+// GetEntityDataRef retrieves an entity_data_reference from the database based on the given filter
+func (r *PgRepository) GetEntityDataRef(filter map[string]interface{}) ([]entity.EntityDataReference, error) {
+	var conditions []string
+	var args []interface{}
+	i := 1
+	for key, value := range filter {
+		column, ok := entityDataRefFieldToColumn[strings.ToLower(key)]
+		if !ok {
+			return nil, fmt.Errorf("invalid field: %s", key)
+		}
+		conditions = append(conditions, fmt.Sprintf("%s = $%d", column, i))
+		args = append(args, value)
+		i++
+	}
+	query := ENTITY_DATA_REF_GET
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entityDataRefs []entity.EntityDataReference
+	for rows.Next() {
+		var edr entity.EntityDataReference
+		if err := rows.Scan(&edr.Entity, &edr.Order, &edr.Name, &edr.Type, &edr.Comment); err != nil {
+			return nil, err
+		}
+		entityDataRefs = append(entityDataRefs, edr)
+	}
+	if len(entityDataRefs) == 0 {
+		return nil, fmt.Errorf("entity_data_reference not found")
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return entityDataRefs, nil
+}
+
+// UpdateEntityDataRef updates an entity_data_reference in the database
+func (r *PgRepository) UpdateEntityDataRef(ref map[string]interface{}) (sql.Result, error) {
+	entityStr, entityOk := ref["Entity"]
+	orderStr, orderOk := ref["Order"]
+	if !entityOk || !orderOk {
+		return nil, fmt.Errorf("missing entity_data_reference entity or order")
+	}
+	var setClauses []string
+	var args []interface{}
+	i := 1
+	for key, value := range ref {
+		if key == "Entity" || key == "Order" {
+			continue
+		}
+		column, ok := entityDataRefFieldToColumn[strings.ToLower(key)]
+		if !ok {
+			return nil, fmt.Errorf("invalid field: %s", key)
+		}
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", column, i))
+		args = append(args, value)
+		i++
+	}
+
+	if len(setClauses) == 0 {
+		return nil, fmt.Errorf("no fields to update")
+	}
+
+	query := fmt.Sprintf(ENTITY_DATA_REF_UPDATE, strings.Join(setClauses, ", "), i, i+1)
+	args = append(args, entityStr, orderStr)
+
+	result, err := r.DB.Exec(query, args...)
+	return result, err
+}
+
+// DeleteEntityDataRef deletes an entity_data_reference from the database
+func (r *PgRepository) DeleteEntityDataRef(ref map[string]interface{}) (sql.Result, error) {
+	entityStr, entityOk := ref["Entity"]
+	orderStr, orderOk := ref["Order"]
+	if !entityOk || !orderOk {
+		return nil, fmt.Errorf("missing entity_data_reference entity or order")
+	}
+	result, err := r.DB.Exec(ENTITY_DATA_REF_DELETE, entityStr, orderStr)
+	return result, err
 }
