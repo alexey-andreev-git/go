@@ -14,72 +14,29 @@ type RestController struct {
 	appService   service.Service
 }
 
+const (
+	apiV1Path = "/api/v1"
+)
+
 func NewRestController(appConfig *config.Config, appService service.Service) *RestController {
 	c := &RestController{
 		httpHandlers: make(HttpHandlersT),
 		config:       appConfig,
 		appService:   appService,
 	}
-	c.httpHandlers["entity_get"] = ControllerHandlerT{
-		Method:  "GET",
-		Handler: c.entityV1GetHandler,
-		Path:    "/api/v1/entity/{rest:.*}",
-	}
-	c.httpHandlers["entity_post"] = ControllerHandlerT{
-		Method:  "POST",
-		Handler: c.entityV1PostHandler,
-		Path:    "/api/v1/entity/{rest:.*}",
-	}
-	c.httpHandlers["entity_put"] = ControllerHandlerT{
-		Method:  "PUT",
-		Handler: c.entityV1PutHandler,
-		Path:    "/api/v1/entity/{rest:.*}",
-	}
-	c.httpHandlers["entity_delete"] = ControllerHandlerT{
-		Method:  "DELETE",
-		Handler: c.entityV1DeleteHandler,
-		Path:    "/api/v1/entity/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_get"] = ControllerHandlerT{
-		Method:  "GET",
-		Handler: c.entityDataV1GetHandler,
-		Path:    "/api/v1/entities_data/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_post"] = ControllerHandlerT{
-		Method:  "POST",
-		Handler: c.entityDataV1PostHandler,
-		Path:    "/api/v1/entities_data/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_put"] = ControllerHandlerT{
-		Method:  "PUT",
-		Handler: c.entityDataV1PutHandler,
-		Path:    "/api/v1/entities_data/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_delete"] = ControllerHandlerT{
-		Method:  "DELETE",
-		Handler: c.entityDataV1DeleteHandler,
-		Path:    "/api/v1/entities_data/{rest:.*}",
-	}
-	// New handlers for entities_data_reference
-	c.httpHandlers["entities_data_reference_get"] = ControllerHandlerT{
-		Method:  "GET",
-		Handler: c.entityDataRefV1GetHandler,
-		Path:    "/api/v1/entities_data_reference/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_reference_post"] = ControllerHandlerT{
-		Method:  "POST",
-		Handler: c.entityDataRefV1PostHandler,
-		Path:    "/api/v1/entities_data_reference/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_reference_put"] = ControllerHandlerT{
-		Method:  "PUT",
-		Handler: c.entityDataRefV1PutHandler,
-		Path:    "/api/v1/entities_data_reference/{rest:.*}",
-	}
-	c.httpHandlers["entities_data_reference_delete"] = ControllerHandlerT{
-		Method:  "DELETE",
-		Handler: c.entityDataRefV1DeleteHandler,
-		Path:    "/api/v1/entities_data_reference/{rest:.*}",
+	c.httpHandlers = HttpHandlersT{
+		"entity_get":                     ControllerHandlerT{Method: "GET", Handler: c.entityV1GetHandler, Path: apiV1Path + "/entity/{rest:.*}"},
+		"entity_post":                    ControllerHandlerT{Method: "POST", Handler: c.entityV1PostHandler, Path: apiV1Path + "/entity/{rest:.*}"},
+		"entity_put":                     ControllerHandlerT{Method: "PUT", Handler: c.entityV1PutHandler, Path: apiV1Path + "/entity/{rest:.*}"},
+		"entity_delete":                  ControllerHandlerT{Method: "DELETE", Handler: c.entityV1DeleteHandler, Path: apiV1Path + "/entity/{rest:.*}"},
+		"entities_data_get":              ControllerHandlerT{Method: "GET", Handler: c.entityDataV1GetHandler, Path: apiV1Path + "/entities_data/{rest:.*}"},
+		"entities_data_post":             ControllerHandlerT{Method: "POST", Handler: c.entityDataV1PostHandler, Path: apiV1Path + "/entities_data/{rest:.*}"},
+		"entities_data_put":              ControllerHandlerT{Method: "PUT", Handler: c.entityDataV1PutHandler, Path: apiV1Path + "/entities_data/{rest:.*}"},
+		"entities_data_delete":           ControllerHandlerT{Method: "DELETE", Handler: c.entityDataV1DeleteHandler, Path: apiV1Path + "/entities_data/{rest:.*}"},
+		"entities_data_reference_get":    ControllerHandlerT{Method: "GET", Handler: c.entityDataRefV1GetHandler, Path: apiV1Path + "/entities_data_reference/{rest:.*}"},
+		"entities_data_reference_post":   ControllerHandlerT{Method: "POST", Handler: c.entityDataRefV1PostHandler, Path: apiV1Path + "/entities_data_reference/{rest:.*}"},
+		"entities_data_reference_put":    ControllerHandlerT{Method: "PUT", Handler: c.entityDataRefV1PutHandler, Path: apiV1Path + "/entities_data_reference/{rest:.*}"},
+		"entities_data_reference_delete": ControllerHandlerT{Method: "DELETE", Handler: c.entityDataRefV1DeleteHandler, Path: apiV1Path + "/entities_data_reference/{rest:.*}"},
 	}
 	return c
 }
