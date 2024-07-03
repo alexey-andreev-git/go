@@ -39,8 +39,8 @@ func NewWhattoApp() *WhatToApp {
 }
 
 func (app *WhatToApp) Start() error {
-	app.appRouter.AddController("front", controller.NewFrontController(app.appConfig))
 	app.appRouter.AddController("rest", controller.NewRestController(app.appConfig, app.appService))
+	app.appRouter.AddController("front", controller.NewFrontController(app.appConfig))
 	return app.startServer()
 }
 

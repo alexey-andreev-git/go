@@ -59,13 +59,21 @@ CREATE TABLE IF NOT EXISTS entities_data_val_time (
 COMMENT ON COLUMN entities_data_val_time.entities_data_val_time_id IS 'value''s id';
 COMMENT ON COLUMN entities_data_val_time.entities_data_val_time_value IS 'value';
 
--- CREATE TABLE IF NOT EXISTS entities_ref (
---   id SERIAL PRIMARY KEY,
---   entities_ref_name char(40) NOT NULL,
---   entities_ref_comment varchar(256) NOT NULL,
---   UNIQUE(entities_ref_name)
--- );
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  user_name VARCHAR(40) NOT NULL,
+  user_email VARCHAR(256) NOT NULL,
+  user_password VARCHAR(256) NOT NULL,
+  user_role VARCHAR(10) NOT NULL,
+  user_person_id int,
+  UNIQUE(user_email)
+);
 
--- COMMENT ON COLUMN entities_ref.id IS 'reference''s id';
--- COMMENT ON COLUMN entities_ref.entities_ref_name IS 'reference''s name';
--- COMMENT ON COLUMN entities_ref.entities_ref_comment IS 'comment';
+CREATE TABLE IF NOT EXISTS persons (
+  id SERIAL PRIMARY KEY,
+  person_name VARCHAR(40) NOT NULL,
+  person_middle_name VARCHAR(40) NOT NULL,
+  person_surname VARCHAR(40) NOT NULL,
+  person_birthdate DATE NOT NULL,
+  person_id VARCHAR(20)
+);
