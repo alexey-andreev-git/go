@@ -12,8 +12,8 @@ type (
 		Path    string
 		// config  *config.Config
 	}
-	// HttpHandlersT is a map of path string to ControllerHandlerT
-	HttpHandlersT map[string]ControllerHandlerT
+	// HttpHandlersT is a slice of ControllerHandlerT
+	HttpHandlersT []ControllerHandlerT
 	Controller    interface {
 		GetHandlers() HttpHandlersT
 	}

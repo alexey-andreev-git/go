@@ -10,6 +10,7 @@ import (
 
 	"what-to.com/internal/config"
 	"what-to.com/internal/controller"
+	"what-to.com/internal/middleware"
 	"what-to.com/internal/repository"
 	"what-to.com/internal/router"
 	"what-to.com/internal/service"
@@ -19,6 +20,7 @@ type WhatToApp struct {
 	appConfig     *config.Config
 	appRepository repository.Repository
 	appRouter     router.Router
+	appMiddleware middleware.Middleware
 	appService    service.Service
 	httpServer    *http.Server
 	httpConfig    config.ConfigT
@@ -31,9 +33,11 @@ func NewWhattoApp() *WhatToApp {
 	app.appRouter = router.NewEntityRouter()
 	app.appService = service.NewEntityService(app.appConfig, app.appRepository)
 	app.httpConfig = app.appConfig.GetConfig()["http"].(config.ConfigT)
+	app.appMiddleware = middleware.NewEntityMiddleware(app.appConfig, app.appRouter.GetMuxRouter())
 	app.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
-		Handler: app.appRouter.GetMuxRouter(),                     // Http handlers here.
+		Addr: fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
+		// Handler: app.appRouter.GetMuxRouter(),                     // Http handlers here.
+		Handler: app.appMiddleware.GetHandler(), // Http handlers here.
 	}
 	return app
 }
