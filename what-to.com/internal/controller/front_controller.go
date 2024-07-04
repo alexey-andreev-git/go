@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -19,18 +18,16 @@ type FrontController struct {
 
 func NewFrontController(appConfig *config.Config) *FrontController {
 	c := &FrontController{
-		httpHandlers: make(HttpHandlersT),
-		appRes:       resources.NewAppSources(),
-		config:       appConfig,
+		appRes: resources.NewAppSources(),
+		config: appConfig,
 	}
 	c.httpHandlers = HttpHandlersT{
-		"front_root": ControllerHandlerT{Method: "GET", Handler: c.RootHandler, Path: "/{rest:.*}"},
+		ControllerHandlerT{Method: "GET", Handler: c.RootHandler, Path: "/{rest:.*}"},
 	}
 	return c
 }
 
 func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
-	c.config.GetLogger().Info(fmt.Sprintf("Start HTTP handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
 	subFS, err := fs.Sub(c.appRes.GetRes(), "appfs/frontend")
 	if err != nil {
 		c.config.GetLogger().Error("Error reading embedded FS for HTTP", err)
@@ -46,8 +43,7 @@ func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 	fullPath = strings.TrimPrefix(path, "/")
 	if _, err := fs.Stat(subFS, fullPath); err != nil {
 		if os.IsNotExist(err) {
-			// Если файл не существует, возвращаем index.html
-			// r.URL.Path = "/index.html"
+			// If path doesn't exist then returning index.html
 			indexFile, err := subFS.Open("index.html")
 			if err != nil {
 				c.config.GetLogger().Error("Error opening index.html from embedded FS", err)
@@ -56,7 +52,7 @@ func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			defer indexFile.Close()
 
-			// Читаем содержимое index.html
+			// Reading index.html
 			indexData, err := fs.ReadFile(subFS, "index.html")
 			if err != nil {
 				c.config.GetLogger().Error("Error reading index.html from embedded FS", err)
@@ -64,20 +60,18 @@ func (c *FrontController) RootHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			// Устанавливаем заголовки и пишем содержимое index.html в ответ
+			// Set header and write content of index.html to response
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(indexData)
 			return
 		} else {
-			// Если произошла другая ошибка, возвращаем ошибку сервера
+			// If another error then returning server error
 			c.config.GetLogger().Error("Error reading file from embedded FS", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 	}
 	http.StripPrefix("/", fileServer).ServeHTTP(w, r)
-	c.config.GetLogger().Info(fmt.Sprintf("[HTTP] [%s] [%s] served frontend files.", r.Method, r.URL.Path))
-	c.config.GetLogger().Info(fmt.Sprintf("Finish HTTP handler called from: %s, method: %s, path: %s", r.RemoteAddr, r.Method, r.URL.Path))
 }
 
 func (c *FrontController) GetHandlers() HttpHandlersT {
