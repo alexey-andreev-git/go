@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"what-to.com/internal/config"
 	"what-to.com/internal/controller"
 	"what-to.com/internal/middleware"
+	"what-to.com/internal/migration"
+	"what-to.com/internal/models"
 	"what-to.com/internal/repository"
 	"what-to.com/internal/router"
 	"what-to.com/internal/service"
@@ -21,7 +24,6 @@ type WhatToApp struct {
 	appRepository repository.Repository
 	appRouter     router.Router
 	appMiddleware middleware.Middleware
-	appService    service.Service
 	httpServer    *http.Server
 	httpConfig    config.ConfigT
 }
@@ -29,23 +31,114 @@ type WhatToApp struct {
 func NewWhattoApp() *WhatToApp {
 	app := &WhatToApp{}
 	app.appConfig = config.NewConfig()
-	app.appRepository = repository.NewPgRepository(app.appConfig)
-	app.appRouter = router.NewEntityRouter()
-	app.appService = service.NewEntityService(app.appConfig, app.appRepository)
-	app.httpConfig = app.appConfig.GetConfig()["http"].(config.ConfigT)
-	app.appMiddleware = middleware.NewEntityMiddleware(app.appConfig, app.appRouter.GetMuxRouter())
-	app.httpServer = &http.Server{
-		Addr: fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
-		// Handler: app.appRouter.GetMuxRouter(),                     // Http handlers here.
-		Handler: app.appMiddleware.GetHandler(), // Http handlers here.
-	}
+	// app.appRepository = repository.NewGormPgRepository(app.appConfig)
+	// app.appRepository = repository.NewPgRepository(app.appConfig)
+	// app.appRouter = router.NewEntityRouter()
+	// app.httpConfig = app.appConfig.GetConfig()["http"].(config.ConfigT)
+	// app.appMiddleware = middleware.NewEntityMiddleware(app.appConfig, app.appRouter.GetMuxRouter())
+	// app.httpServer = &http.Server{
+	// 	Addr:    fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
+	// 	Handler: app.appMiddleware.GetHandler(),                   // Http handlers here.
+	// }
+	app.tests()
 	return app
 }
 
 func (app *WhatToApp) Start() error {
-	app.appRouter.AddController("rest", controller.NewRestController(app.appConfig, app.appService))
-	app.appRouter.AddController("front", controller.NewFrontController(app.appConfig))
+	return nil
+	app.appRouter.AddController(
+		"entity",
+		controller.NewHttpControllerV1(
+			app.appConfig,
+			service.NewEntityService(app.appConfig, app.appRepository),
+		),
+	)
+	app.appRouter.AddController(
+		"auth",
+		controller.NewHttpControllerV1(
+			app.appConfig,
+			service.NewAuthService(app.appConfig, app.appRepository),
+		),
+	)
+	app.appRouter.AddController(
+		"front_routes",
+		controller.NewHttpControllerV1(
+			app.appConfig,
+			service.NewFrontRoutesService(app.appConfig, app.appRepository),
+		),
+	)
+	app.appRouter.AddController(
+		"front",
+		controller.NewHttpControllerV1(
+			app.appConfig,
+			service.NewFrontService(app.appConfig, app.appRepository),
+		),
+	)
+	// app.tests()
 	return app.startServer()
+}
+
+func (app *WhatToApp) tests() {
+	// u := models.User{
+	// 	Name:     "test",
+	// 	Password: "test",
+	// 	Person: models.Person{
+	// 		FirstName:  "first_test",
+	// 		MiddleName: "middle_test",
+	// 		LastName:   "last_test",
+	// 		AddressList: []models.Address{
+	// 			{
+	// 				Unit:     "unit_test",
+	// 				Building: "building_test",
+	// 				Street:   "street_test",
+	// 				City:     "city_test",
+	// 				State:    "state_test",
+	// 				ZipCode:  "zip_test",
+	// 			},
+	// 		},
+	// 		EmailsList: []models.Email{
+	// 			{
+	// 				Name:  "email_test",
+	// 				Email: "my@email.net",
+	// 			},
+	// 		},
+	// 		PhonesList: []models.Phone{
+	// 			{
+	// 				Name:  "phone_test",
+	// 				Phone: "1234567890",
+	// 			},
+	// 		},
+	// 	},
+	// }
+	// app.appRepository.Create(context.Background(), &u)
+	// ul := []models.User{}
+	// app.appRepository.FindAll(context.Background(), &ul)
+	// json, _ := json.Marshal(ul)
+	// fmt.Println(json)
+	qry := generateCreateTableQuery("addresses", models.Address{})
+	fmt.Println(qry)
+	qry = generateCreateTableQuery("people", models.Person{})
+	fmt.Println(qry)
+}
+
+// Generate SQL CREATE TABLE query using structure name
+func generateCreateTableQuery(tableName string, model interface{}) string {
+	pm := migration.NewPgMigration()
+	pm.AddTable(tableName, model)
+	// columns := getModelFields(model)
+	columns := pm.GetTables()[tableName]
+	strColumns := ""
+	delimiter := ""
+	for _, column := range columns {
+		strColumns += delimiter + column.Name + " " + column.Type + " " + strings.Join(column.Tags, " ")
+		delimiter = ", "
+	}
+
+	// columnsSQL := strings.Join(columns, ", ")
+	query := fmt.Sprintf("CREATE TABLE %s IF NOT EXISTS (%s);", tableName, strColumns)
+	// query := pm.GetTables()[tableName]
+
+	return query
 }
 
 func (app *WhatToApp) startServer() (err error) {

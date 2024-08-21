@@ -1,12 +1,13 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
 
 	"what-to.com/internal/config"
-	"what-to.com/internal/entity"
+	"what-to.com/internal/models/entity"
 	"what-to.com/internal/resources"
 
 	_ "github.com/lib/pq"
@@ -32,11 +33,11 @@ const (
 type (
 	// DBConfig holds the database connection configuration
 	DBConfig struct {
-		Host     string
-		Port     int
-		User     string
-		Password string
-		DBName   string
+		Host     string `json:"host"`
+		Port     int    `json:"port"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		DBName   string `json:"dbname"`
 	}
 
 	// PgRepository is the PostgreSQL repository
@@ -463,4 +464,24 @@ func (r *PgRepository) DeleteEntityDataRef(ref map[string]interface{}) (sql.Resu
 	}
 	result, err := r.DB.Exec(ENTITY_DATA_REF_DELETE, entityStr, orderStr)
 	return result, err
+}
+
+func (r *PgRepository) Create(ctx context.Context, value interface{}) error {
+	return nil
+}
+
+func (r *PgRepository) Update(ctx context.Context, value interface{}) error {
+	return nil
+}
+
+func (r *PgRepository) Delete(ctx context.Context, value interface{}) error {
+	return nil
+}
+
+func (r *PgRepository) FindByID(ctx context.Context, id uint, out interface{}) error {
+	return nil
+}
+
+func (r *PgRepository) FindAll(ctx context.Context, out interface{}) error {
+	return nil
 }

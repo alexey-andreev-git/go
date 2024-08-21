@@ -10,7 +10,6 @@ type (
 		Method  string
 		Handler http.HandlerFunc
 		Path    string
-		// config  *config.Config
 	}
 	// HttpHandlersT is a slice of ControllerHandlerT
 	HttpHandlersT []ControllerHandlerT

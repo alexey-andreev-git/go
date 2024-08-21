@@ -1,10 +1,12 @@
 package repository
 
 import (
-	"database/sql"
+	// "database/sql"
+
+	"context"
 
 	"what-to.com/internal/config"
-	"what-to.com/internal/entity"
+	// "what-to.com/internal/entity"
 )
 
 type (
@@ -13,19 +15,25 @@ type (
 		GetRepoConfig() DBConfig
 		GetRepoConfigStr() string
 
-		CreateEntity(map[string]interface{}) (entity.Entity, error)
-		GetEntity(map[string]interface{}) (entity.Entity, error)
-		UpdateEntity(map[string]interface{}) (sql.Result, error)
-		DeleteEntity(map[string]interface{}) (sql.Result, error)
+		Create(ctx context.Context, value interface{}) error
+		Update(ctx context.Context, value interface{}) error
+		Delete(ctx context.Context, value interface{}) error
+		FindByID(ctx context.Context, id uint, out interface{}) error
+		FindAll(ctx context.Context, out interface{}) error
 
-		CreateEntityData(map[string]interface{}) ([]entity.EntityData, error)
-		GetEntityData(map[string]interface{}) ([]entity.EntityData, error)
-		UpdateEntityData(map[string]interface{}) (sql.Result, error)
-		DeleteEntityData(map[string]interface{}) (sql.Result, error)
+		// CreateEntity(map[string]interface{}) (entity.Entity, error)
+		// GetEntity(map[string]interface{}) (entity.Entity, error)
+		// UpdateEntity(map[string]interface{}) (sql.Result, error)
+		// DeleteEntity(map[string]interface{}) (sql.Result, error)
 
-		CreateEntityDataRef(map[string]interface{}) ([]entity.EntityDataReference, error)
-		GetEntityDataRef(map[string]interface{}) ([]entity.EntityDataReference, error)
-		UpdateEntityDataRef(map[string]interface{}) (sql.Result, error)
-		DeleteEntityDataRef(map[string]interface{}) (sql.Result, error)
+		// CreateEntityData(map[string]interface{}) ([]entity.EntityData, error)
+		// GetEntityData(map[string]interface{}) ([]entity.EntityData, error)
+		// UpdateEntityData(map[string]interface{}) (sql.Result, error)
+		// DeleteEntityData(map[string]interface{}) (sql.Result, error)
+
+		// CreateEntityDataRef(map[string]interface{}) ([]entity.EntityDataReference, error)
+		// GetEntityDataRef(map[string]interface{}) ([]entity.EntityDataReference, error)
+		// UpdateEntityDataRef(map[string]interface{}) (sql.Result, error)
+		// DeleteEntityDataRef(map[string]interface{}) (sql.Result, error)
 	}
 )
