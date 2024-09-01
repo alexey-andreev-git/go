@@ -9,6 +9,7 @@ import (
 	"what-to.com/internal/config"
 	"what-to.com/internal/models/entity"
 	"what-to.com/internal/resources"
+	"what-to.com/internal/safemap"
 
 	_ "github.com/lib/pq"
 )
@@ -42,9 +43,13 @@ type (
 
 	// PgRepository is the PostgreSQL repository
 	PgRepository struct {
-		DB        *sql.DB
-		appConfig *config.Config
-		dbConfig  DBConfig
+		DB                    *sql.DB
+		appConfig             *config.Config
+		dbConfig              DBConfig
+		mapRefEntities        *safemap.SafeMap
+		mapRefEntitiesIds     *safemap.SafeMap
+		mapRefEntitiesData    *safemap.SafeMap
+		mapRefEntitiesDataIds *safemap.SafeMap
 	}
 )
 
@@ -74,6 +79,10 @@ func NewPgRepository(appConfig *config.Config) *PgRepository {
 		DB:        nil,
 		appConfig: appConfig,
 	}
+	r.mapRefEntities = safemap.NewSafeMap()
+	r.mapRefEntitiesIds = safemap.NewSafeMap()
+	r.mapRefEntitiesData = safemap.NewSafeMap()
+	r.mapRefEntitiesDataIds = safemap.NewSafeMap()
 	r.SetRepoConfig(appConfig.GetConfig()["database"].(config.ConfigT))
 	r.connectToDb()
 	return r
@@ -81,12 +90,12 @@ func NewPgRepository(appConfig *config.Config) *PgRepository {
 
 // connectToDb connects to the PostgreSQL database
 func (r *PgRepository) connectToDb() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password, r.dbConfig.DBName)
+	// psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	// 	r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password, r.dbConfig.DBName)
 
 	r.checkDB()
 
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err := sql.Open("postgres", r.GetRepoConfigStr())
 	if err != nil {
 		r.appConfig.GetLogger().Fatal("Connection to the database failed:", err)
 	}
@@ -119,8 +128,8 @@ func (r *PgRepository) GetRepoConfig() DBConfig {
 
 // GetRepoConfigStr returns the DBConfig as a string
 func (r *PgRepository) GetRepoConfigStr() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable",
-		r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password)
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		r.dbConfig.Host, r.dbConfig.Port, r.dbConfig.User, r.dbConfig.Password, r.dbConfig.DBName)
 }
 
 // checkDB checks if the database exists, and creates it if it doesn't
@@ -160,14 +169,22 @@ func (r *PgRepository) UpdateDB() {
 	if err != nil {
 		r.appConfig.GetLogger().Fatal("Failed to update database:", err)
 	}
+
+	r.LoadEntitiesReference(context.Background())
+	r.LoadEntitiesDataReference(context.Background())
+	r.genSqlByEntityReference()
 }
 
 // CreateEntity creates a new entity in the database
 func (r *PgRepository) CreateEntity(ent map[string]interface{}) (entity.Entity, error) {
+	// createdEntity := entity.Entity{
+	// 	Id:      0,
+	// 	Name:    ent["Name"].(string),
+	// 	Comment: ent["Comment"].(string),
+	// }
 	createdEntity := entity.Entity{
-		Id:      0,
-		Name:    ent["Name"].(string),
-		Comment: ent["Comment"].(string),
+		Id:        0,
+		Reference: ent["Reference"].(int),
 	}
 	err := r.DB.QueryRow(ENTITY_CREATE, ent["Name"], ent["Comment"]).Scan(&createdEntity.Id)
 	return createdEntity, err
@@ -200,7 +217,8 @@ func (r *PgRepository) GetEntity(filter map[string]interface{}) (entity.Entity, 
 	var entities []entity.Entity
 	for rows.Next() {
 		var e entity.Entity
-		if err := rows.Scan(&e.Id, &e.Name, &e.Comment); err != nil {
+		// if err := rows.Scan(&e.Id, &e.Name, &e.Comment); err != nil {
+		if err := rows.Scan(&e.Id, &e.Reference); err != nil {
 			return entity.Entity{}, err
 		}
 		entities = append(entities, e)
@@ -369,11 +387,11 @@ func (r *PgRepository) DeleteEntityData(data map[string]interface{}) (sql.Result
 func (r *PgRepository) CreateEntityDataRef(ref map[string]interface{}) ([]entity.EntityDataReference, error) {
 	createdRef := []entity.EntityDataReference{
 		{
-			Entity:  ref["Entity"].(int),
-			Order:   ref["Order"].(int),
-			Name:    ref["Name"].(string),
-			Type:    ref["Type"].(string),
-			Comment: ref["Comment"].(string),
+			Reference: ref["Reference"].(int),
+			Order:     ref["Order"].(int),
+			Name:      ref["Name"].(string),
+			Type:      ref["Type"].(string),
+			Comment:   ref["Comment"].(string),
 		},
 	}
 	_, err := r.DB.Exec(ENTITY_DATA_REF_CREATE, ref["Entity"], ref["Order"], ref["Name"], ref["Type"], ref["Comment"])
@@ -407,7 +425,7 @@ func (r *PgRepository) GetEntityDataRef(filter map[string]interface{}) ([]entity
 	var entityDataRefs []entity.EntityDataReference
 	for rows.Next() {
 		var edr entity.EntityDataReference
-		if err := rows.Scan(&edr.Entity, &edr.Order, &edr.Name, &edr.Type, &edr.Comment); err != nil {
+		if err := rows.Scan(&edr.Reference, &edr.Order, &edr.Name, &edr.Type, &edr.Comment); err != nil {
 			return nil, err
 		}
 		entityDataRefs = append(entityDataRefs, edr)
@@ -467,6 +485,7 @@ func (r *PgRepository) DeleteEntityDataRef(ref map[string]interface{}) (sql.Resu
 }
 
 func (r *PgRepository) Create(ctx context.Context, value interface{}) error {
+
 	return nil
 }
 
@@ -483,5 +502,84 @@ func (r *PgRepository) FindByID(ctx context.Context, id uint, out interface{}) e
 }
 
 func (r *PgRepository) FindAll(ctx context.Context, out interface{}) error {
+	return nil
+}
+
+func (r *PgRepository) LoadEntitiesReference(ctx context.Context) error {
+	cols := "entity_reference_id,entity_reference_name,entity_reference_comment"
+	qry := fmt.Sprintf("SELECT %s FROM entities_reference", cols)
+	rows, err := r.DB.QueryContext(ctx, qry)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var ref entity.EntityReference
+		var refById entity.EntityReferenceById
+		if err := rows.Scan(&ref.Id, &ref.Name, &ref.Comment); err != nil {
+			return err
+		}
+		refById.Name = ref.Name
+		refById.Comment = ref.Comment
+		r.mapRefEntities.Set(ref.Id, refById)
+		r.mapRefEntitiesIds.Set(ref.Name, ref.Id)
+	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *PgRepository) LoadEntitiesDataReference(ctx context.Context) error {
+	cols := "entity_data_reference_entity_reference,entity_data_reference_order,entity_data_reference_name,entity_data_reference_type,entity_data_reference_comment"
+	qry := fmt.Sprintf("SELECT %s FROM entities_data_reference", cols)
+	rows, err := r.DB.QueryContext(ctx, qry)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var ref entity.EntityDataReference
+		if err := rows.Scan(&ref.Reference, &ref.Order, &ref.Name, &ref.Type, &ref.Comment); err != nil {
+			return err
+		}
+		refOrder := entity.EntityDataReferenceByOrder{
+			Name:    ref.Name,
+			Type:    ref.Type,
+			Comment: ref.Comment,
+		}
+		rec, ok := r.mapRefEntitiesData.Get(ref.Reference)
+		if !ok {
+			rec = safemap.NewSafeMap()
+			r.mapRefEntitiesData.Set(ref.Reference, rec)
+		}
+		rec.(*safemap.SafeMap).Set(ref.Order, refOrder)
+	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *PgRepository) genSqlByEntityReference() error {
+	fmt.Println("Entities Reference IDs:")
+	r.mapRefEntitiesIds.Range(func(key, value interface{}) bool {
+		fmt.Println(key, value)
+		fmt.Print("    ")
+		fmt.Println(r.mapRefEntities.Get(value.(int)))
+		return true
+	})
+	r.genSqlByEntityDataReference()
+	return nil
+}
+
+func (r *PgRepository) genSqlByEntityDataReference() error {
+	fmt.Println("Entities Data Reference IDs:")
+	r.mapRefEntitiesData.Range(func(key, value interface{}) bool {
+		fmt.Println(key, value.(*safemap.SafeMap))
+		return true
+	})
 	return nil
 }
