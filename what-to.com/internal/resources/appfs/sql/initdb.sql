@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS entities_data_val_char (
   entity_data_val_char_id SERIAL PRIMARY KEY,
   entity_data_val_char_value varchar(2048) NOT NULL
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_entity_data_val_char_value
+ON entities_data_val_char (entity_data_val_char_value);
+
 COMMENT ON COLUMN entities_data_val_char.entity_data_val_char_id IS 'value''s id';
 COMMENT ON COLUMN entities_data_val_char.entity_data_val_char_value IS 'value';
 
@@ -160,7 +163,7 @@ VALUES
 -- Insert into entities_data_reference for 'Score'
     ((SELECT entity_reference_id FROM entities_reference WHERE entity_reference_name = 'Score'), 1, 'Test Score', 'float', 'Score achieved in a test'),
 -- Insert into entities_data_reference for 'Event Time'
-    ((SELECT entity_reference_id FROM entities_reference WHERE entity_reference_name = 'Event Time'), 1, 'Event Start Time', 'timestamp', 'Start time of the event'),
+    ((SELECT entity_reference_id FROM entities_reference WHERE entity_reference_name = 'Event Time'), 1, 'Event Start Time', 'time', 'Start time of the event'),
 -- Insert into entities_data_reference for 'Identifier'
     ((SELECT entity_reference_id FROM entities_reference WHERE entity_reference_name = 'Identifier'), 1, 'ID Number', 'int', 'Identifier number for the entity');
 

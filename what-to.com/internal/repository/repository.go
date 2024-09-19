@@ -18,8 +18,8 @@ type (
 		Create(ctx context.Context, value interface{}) error
 		Update(ctx context.Context, value interface{}) error
 		Delete(ctx context.Context, value interface{}) error
-		FindByID(ctx context.Context, id uint, out interface{}) error
-		FindAll(ctx context.Context, out interface{}) error
+		FindByID(ctx context.Context, entId uint, id uint) (interface{}, error)
+		FindAll(ctx context.Context, entId uint) (interface{}, error)
 
 		// CreateEntity(map[string]interface{}) (entity.Entity, error)
 		// GetEntity(map[string]interface{}) (entity.Entity, error)

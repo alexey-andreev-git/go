@@ -2,7 +2,7 @@ package entity
 
 // EntityReference represents the reference data associated with an entity in the database
 type EntityReference struct {
-	Id      int    `json:"id"`
+	Id      uint   `json:"id"`
 	Name    string `json:"name"`
 	Comment string `json:"comment"`
 }
@@ -13,8 +13,8 @@ type EntityReferenceById struct {
 
 // EntityDataReference represents the reference data associated with an entity in the database
 type EntityDataReference struct {
-	Reference int    `json:"reference"`
-	Order     int    `json:"order"`
+	Reference uint   `json:"reference"`
+	Order     uint   `json:"order"`
 	Name      string `json:"name"`
 	Type      string `json:"type"`
 	Comment   string `json:"comment"`
@@ -27,13 +27,13 @@ type EntityDataReferenceByOrder struct {
 
 // Entity represents an entity in the database
 type Entity struct {
-	Id        int `json:"id"`
-	Reference int `json:"reference"`
+	Id        uint `json:"id"`
+	Reference uint `json:"reference"`
 }
 
 // EntityData represents the data associated with an entity in the database
 type EntityData struct {
-	Entity int `json:"entity"`
-	Order  int `json:"order"`
-	Value  int `json:"value"`
+	Entity uint `json:"entity"`
+	Order  uint `json:"order"`
+	Value  uint `json:"value"`
 }

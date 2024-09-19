@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -29,6 +30,20 @@ const (
 	ENTITY_DATA_REF_GET    = `SELECT entities_data_reference_entity, entities_data_reference_order, entities_data_reference_name, entities_data_reference_type, entities_data_reference_comment FROM entities_data_reference`
 	ENTITY_DATA_REF_UPDATE = `UPDATE entities_data_reference SET %s WHERE entities_data_reference_entity=$%d AND entities_data_reference_order=$%d`
 	ENTITY_DATA_REF_DELETE = `DELETE FROM entities_data_reference WHERE entities_data_reference_entity=$1 AND entities_data_reference_order=$2`
+
+	// ------------------------------------------------ fmt constants SELECT
+	GET_QUERY_SELECT    = "SELECT entity_data_val_%s_value "
+	GET_QUERY_FROM      = "FROM entities_data "
+	GET_QUERY_LEFT_JOIN = "LEFT JOIN entities_data_val_%s ON entity_data_value = entity_data_val_%s_id "
+	GET_QUERY_WHERE     = "WHERE entity_data_entity = entity_id AND entity_data_order=%d"
+	// ------------------------------------------------ fmt constants SELECT
+
+	// ------------------------------------------------ fmt constants INSERT
+	CREATE_QUERY_INSERT    = "INSERT INTO entities_data_val_%s (entity_data_val_%s_value) VALUES ($%d) ON CONFLICT (entity_data_val_%s_value) DO NOTHING;"
+	CREATE_QUERY_FROM      = "FROM entities_data "
+	CREATE_QUERY_LEFT_JOIN = "LEFT JOIN entities_data_val_%s ON entity_data_value = entity_data_val_%s_id "
+	CREATE_QUERY_WHERE     = "WHERE entity_data_entity = entity_id AND entity_data_order=%d) AS field_%d"
+	// ------------------------------------------------ fmt constants INSERT
 )
 
 type (
@@ -41,6 +56,13 @@ type (
 		DBName   string `json:"dbname"`
 	}
 
+	EntityQuerys struct {
+		CreateFields string
+		GetFields    string
+		UpdateFields string
+		DeleteFields string
+	}
+
 	// PgRepository is the PostgreSQL repository
 	PgRepository struct {
 		DB                    *sql.DB
@@ -50,6 +72,7 @@ type (
 		mapRefEntitiesIds     *safemap.SafeMap
 		mapRefEntitiesData    *safemap.SafeMap
 		mapRefEntitiesDataIds *safemap.SafeMap
+		mapEntitiesQrys       map[uint]EntityQuerys
 	}
 )
 
@@ -83,6 +106,7 @@ func NewPgRepository(appConfig *config.Config) *PgRepository {
 	r.mapRefEntitiesIds = safemap.NewSafeMap()
 	r.mapRefEntitiesData = safemap.NewSafeMap()
 	r.mapRefEntitiesDataIds = safemap.NewSafeMap()
+	r.mapEntitiesQrys = make(map[uint]EntityQuerys)
 	r.SetRepoConfig(appConfig.GetConfig()["database"].(config.ConfigT))
 	r.connectToDb()
 	return r
@@ -173,6 +197,20 @@ func (r *PgRepository) UpdateDB() {
 	r.LoadEntitiesReference(context.Background())
 	r.LoadEntitiesDataReference(context.Background())
 	r.genSqlByEntityReference()
+	thresult, err := r.FindAll(context.Background(), 1)
+	if err != nil {
+		r.appConfig.GetLogger().Fatal("Failed to get all entities:", err)
+	}
+	fmt.Println(thresult)
+	thresult, err = r.FindByID(context.Background(), 1, 5)
+	if err != nil {
+		r.appConfig.GetLogger().Fatal("Failed to get entity by id:", err)
+	}
+	json, err := json.Marshal(thresult)
+	if err != nil {
+		r.appConfig.GetLogger().Fatal("Failed to marshal result:", err)
+	}
+	fmt.Println(string(json))
 }
 
 // CreateEntity creates a new entity in the database
@@ -184,7 +222,7 @@ func (r *PgRepository) CreateEntity(ent map[string]interface{}) (entity.Entity, 
 	// }
 	createdEntity := entity.Entity{
 		Id:        0,
-		Reference: ent["Reference"].(int),
+		Reference: ent["Reference"].(uint),
 	}
 	err := r.DB.QueryRow(ENTITY_CREATE, ent["Name"], ent["Comment"]).Scan(&createdEntity.Id)
 	return createdEntity, err
@@ -282,9 +320,9 @@ func (r *PgRepository) DeleteEntity(ent map[string]interface{}) (sql.Result, err
 func (r *PgRepository) CreateEntityData(data map[string]interface{}) ([]entity.EntityData, error) {
 	createdData := []entity.EntityData{
 		{
-			Entity: data["Entity"].(int),
-			Order:  data["Order"].(int),
-			Value:  data["Value"].(int),
+			Entity: data["Entity"].(uint),
+			Order:  data["Order"].(uint),
+			Value:  data["Value"].(uint),
 		},
 	}
 	response, err := r.DB.Exec(ENTITY_DATA_CREATE, data["Entity"], data["Order"], data["Value"])
@@ -292,7 +330,7 @@ func (r *PgRepository) CreateEntityData(data map[string]interface{}) ([]entity.E
 	if rerr != nil {
 		return createdData, rerr
 	}
-	createdData[0].Entity = int(ent)
+	createdData[0].Entity = uint(ent)
 	return createdData, err
 }
 
@@ -387,8 +425,8 @@ func (r *PgRepository) DeleteEntityData(data map[string]interface{}) (sql.Result
 func (r *PgRepository) CreateEntityDataRef(ref map[string]interface{}) ([]entity.EntityDataReference, error) {
 	createdRef := []entity.EntityDataReference{
 		{
-			Reference: ref["Reference"].(int),
-			Order:     ref["Order"].(int),
+			Reference: ref["Reference"].(uint),
+			Order:     ref["Order"].(uint),
 			Name:      ref["Name"].(string),
 			Type:      ref["Type"].(string),
 			Comment:   ref["Comment"].(string),
@@ -485,7 +523,8 @@ func (r *PgRepository) DeleteEntityDataRef(ref map[string]interface{}) (sql.Resu
 }
 
 func (r *PgRepository) Create(ctx context.Context, value interface{}) error {
-
+	// value.(entity.Entity)
+	// r.mapEntitiesQrys[]
 	return nil
 }
 
@@ -497,12 +536,84 @@ func (r *PgRepository) Delete(ctx context.Context, value interface{}) error {
 	return nil
 }
 
-func (r *PgRepository) FindByID(ctx context.Context, id uint, out interface{}) error {
-	return nil
+func fillRowsData(rows *sql.Rows) (interface{}, error) {
+	var out []interface{}
+
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a slice of interfaces to hold the values for each column
+	values := make([]interface{}, len(columns))
+	valuePtrs := make([]interface{}, len(columns))
+
+	for i := range columns {
+		valuePtrs[i] = &values[i]
+	}
+	for rows.Next() {
+		// Scan the result into the value pointers
+		if err := rows.Scan(valuePtrs...); err != nil {
+			return nil, err
+		}
+
+		// Store the result in the map
+		ent := make(map[string]interface{})
+		for i, col := range columns {
+			ent[col] = values[i]
+		}
+		out = append(out, ent)
+	}
+	return out, nil
 }
 
-func (r *PgRepository) FindAll(ctx context.Context, out interface{}) error {
-	return nil
+func (r *PgRepository) FindByID(ctx context.Context, entId uint, id uint) (interface{}, error) {
+	// Get SQL query string from the map based on the ID of the entity's reference
+	sql := r.mapEntitiesQrys[entId].GetFields + fmt.Sprintf(" WHERE entity_id = %d", id)
+
+	// Execute the query
+	rows, err := r.DB.QueryContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() // Ensure rows are closed after use
+
+	// Iterate over rows
+	out, err := fillRowsData(rows)
+	if err != nil {
+		return nil, err
+	}
+	// Check for any error that might have occurred during iteration
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func (r *PgRepository) FindAll(ctx context.Context, entId uint) (interface{}, error) {
+	// Get SQL query string from the map based on the ID of the entity's reference
+	sql := r.mapEntitiesQrys[entId].GetFields
+
+	// Execute the query
+	rows, err := r.DB.QueryContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() // Ensure rows are closed after use
+
+	// Iterate over rows
+	out, err := fillRowsData(rows)
+	if err != nil {
+		return nil, err
+	}
+	// Check for any error that might have occurred during iteration
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 func (r *PgRepository) LoadEntitiesReference(ctx context.Context) error {
@@ -568,18 +679,60 @@ func (r *PgRepository) genSqlByEntityReference() error {
 	r.mapRefEntitiesIds.Range(func(key, value interface{}) bool {
 		fmt.Println(key, value)
 		fmt.Print("    ")
-		fmt.Println(r.mapRefEntities.Get(value.(int)))
+		fmt.Println(r.mapRefEntities.Get(value.(uint)))
+		r.genSqlByEntityDataReference(value.(uint))
 		return true
 	})
-	r.genSqlByEntityDataReference()
 	return nil
 }
 
-func (r *PgRepository) genSqlByEntityDataReference() error {
+func (r *PgRepository) genSqlByEntityDataReference(entityId uint) error {
 	fmt.Println("Entities Data Reference IDs:")
-	r.mapRefEntitiesData.Range(func(key, value interface{}) bool {
-		fmt.Println(key, value.(*safemap.SafeMap))
-		return true
-	})
+	prepQry := EntityQuerys{}
+
+	value, ok := r.mapRefEntitiesData.Get(entityId)
+	if ok {
+		// fmt.Print("    ")
+		// fmt.Println(entityId, ": --------v")
+		getFields := []string{}
+		createFields := []string{}
+		value.(*safemap.SafeMap).Range(func(key, val interface{}) bool {
+			t := val.(entity.EntityDataReferenceByOrder).Type
+			getFields = append(getFields, r.prepFieldForGetQuery(key.(uint), t))
+			createFields = append(createFields, r.prepFieldForCreateQueryInsert(key.(uint), t))
+			// fmt.Print("    ", "    ")
+			// fmt.Println(key, ": ", val)
+			return true
+		})
+		prepQry.GetFields = r.prepSqlForGetQuery(strings.Join(getFields, ", "), entityId)
+		prepQry.CreateFields = strings.Join(createFields, "\n")
+		r.mapEntitiesQrys[entityId] = prepQry
+		// fmt.Print("    ", "    ", "    ")
+		// fmt.Println(r.mapEntitiesQrys[entityId])
+	} else {
+		fmt.Println(entityId, "not found")
+	}
 	return nil
+}
+
+func (r *PgRepository) prepFieldForGetQuery(key uint, t string) string {
+	p1 := fmt.Sprintf(GET_QUERY_SELECT, t)
+	p2 := fmt.Sprintf(GET_QUERY_LEFT_JOIN, t, t)
+	if t == "int" {
+		p1 = "SELECT entity_data_value "
+		p2 = ""
+	}
+	field := "(" + p1 + GET_QUERY_FROM + p2 + GET_QUERY_WHERE + ") AS field_%d"
+	return fmt.Sprintf(field, key, key)
+}
+
+func (r *PgRepository) prepSqlForGetQuery(fields string, id uint) string {
+	return fmt.Sprintf("SELECT * FROM (SELECT *, %s FROM entities e WHERE entity_reference = %d) as ed", fields, id)
+}
+
+func (r *PgRepository) prepFieldForCreateQueryInsert(key uint, t string) string {
+	if t != "int" {
+		return fmt.Sprintf(CREATE_QUERY_INSERT, t, t, key, t)
+	}
+	return ""
 }
