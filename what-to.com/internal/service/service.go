@@ -7,27 +7,26 @@ import (
 	"what-to.com/internal/logger"
 )
 
-type RequestType int
-
 const (
 	apiV1Path        = "/api/v1"
 	restWildcardPath = "/{rest:.*}"
+	errorMessage     = "Error processing request"
 )
 
-type ServiceFunc struct {
-	Handler func(map[string]interface{}) ([]byte, error)
-	Method  string
-	Path    string
-}
-
 type (
+	RequestType int
+
+	ServiceFunc struct {
+		Handler func(map[string]interface{}) ([]byte, error)
+		Method  string
+		Path    string
+	}
+
 	Service interface {
 		GetServiceFuncs() map[RequestType]ServiceFunc
 		ServiceFunction(http.ResponseWriter, *http.Request, string, RequestType)
 	}
 )
-
-const errorMessage = "Error processing request"
 
 func GetRequestBodyJson(w http.ResponseWriter, r *http.Request) (map[string]interface{}, error) {
 	defer r.Body.Close()
