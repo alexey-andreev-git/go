@@ -32,9 +32,11 @@ func NewWhattoApp() *WhatToApp {
 	app.appRouter = router.NewEntityRouter()
 	app.httpConfig = app.appConfig.GetConfig()["http"].(config.ConfigT)
 	app.appMiddleware = middleware.NewEntityMiddleware(app.appConfig, app.appRouter.GetMuxRouter())
+	// app.appMiddleware.Use()
 	app.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
-		Handler: app.appMiddleware.GetHandler(),                   // Http handlers here.
+		Addr: fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
+		// Handler: app.appRouter.GetMuxRouter(), // Http handlers here.
+		Handler: app.appMiddleware.ChainMiddleware(),
 	}
 	return app
 }

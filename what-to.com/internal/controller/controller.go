@@ -7,8 +7,8 @@ import (
 type (
 	// ControllerHandlerT is a struct with Method and Handler for http requests
 	ControllerHandlerT struct {
-		Method  string
 		Handler http.HandlerFunc
+		Method  string
 		Path    string
 	}
 	// HttpHandlersT is a slice of ControllerHandlerT

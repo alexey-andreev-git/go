@@ -38,7 +38,6 @@ const (
 	AuthPost
 	AuthPut
 	AuthDelete
-	AuthOptions
 )
 
 func NewAuthService(appConfig *config.Config, appRepo repository.Repository) *AuthService {
@@ -52,11 +51,10 @@ func NewAuthService(appConfig *config.Config, appRepo repository.Repository) *Au
 
 func (s *AuthService) registerServiceFuncs() {
 	s.serviceFuncs = map[RequestType]ServiceFunc{
-		AuthGet:     {s.V1AuthServiceGet, "GET", apiV1Path + authPath + restWildcardPath},
-		AuthPost:    {s.V1AuthServicePost, "POST", apiV1Path + authPath + restWildcardPath},
-		AuthPut:     {s.V1AuthServicePut, "PUT", apiV1Path + authPath + restWildcardPath},
-		AuthDelete:  {s.V1AuthServiceDelete, "DELETE", apiV1Path + authPath + restWildcardPath},
-		AuthOptions: {s.V1AuthServiceOptions, "OPTIONS", apiV1Path + authPath + restWildcardPath},
+		AuthGet:    {s.V1AuthServiceGet, "GET", apiV1Path + authPath + restWildcardPath},
+		AuthPost:   {s.V1AuthServicePost, "POST", apiV1Path + authPath + restWildcardPath},
+		AuthPut:    {s.V1AuthServicePut, "PUT", apiV1Path + authPath + restWildcardPath},
+		AuthDelete: {s.V1AuthServiceDelete, "DELETE", apiV1Path + authPath + restWildcardPath},
 	}
 }
 
@@ -80,18 +78,12 @@ func (s *AuthService) ServiceFunction(w http.ResponseWriter, r *http.Request, ve
 		// return
 		bodyJson = make(map[string]interface{})
 	}
-	if reqType == AuthOptions {
-		setCorsHeader(w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
 	respJson, rerr := handlerFunc.Handler(bodyJson)
 	if rerr != nil {
 		ErrorHandler(s.appConfig.GetLogger(), w, errorMessage, rerr, http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	setCorsHeader(w, r)
 	w.WriteHeader(http.StatusOK)
 	w.Write(respJson)
 }
@@ -133,10 +125,6 @@ func (s *AuthService) V1AuthServiceDelete(bodyJson map[string]interface{}) ([]by
 	}
 	rows, rerr := result.RowsAffected()
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
-}
-
-func (s *AuthService) V1AuthServiceOptions(bodyJson map[string]interface{}) ([]byte, error) {
-	return nil, nil
 }
 
 func GenerateToken(user string) (string, error) {

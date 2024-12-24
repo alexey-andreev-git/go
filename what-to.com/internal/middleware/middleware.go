@@ -6,7 +6,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Middleware interface {
-	GetHandler() http.Handler
-	GetMiddlewareRouter() *mux.Router
-}
+type (
+	Middleware interface {
+		Use()
+		ChainMiddleware() http.Handler
+		GetMiddlewareRouter() *mux.Router
+	}
+)

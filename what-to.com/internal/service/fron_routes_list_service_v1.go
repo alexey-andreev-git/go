@@ -39,7 +39,6 @@ const (
 	FrontRoutesPost
 	FrontRoutesPut
 	FrontRoutesDelete
-	FrontRoutesOptions
 )
 
 func NewFrontRoutesService(appConfig *config.Config, appRepo repository.Repository) *FrontRoutesService {
@@ -51,19 +50,12 @@ func NewFrontRoutesService(appConfig *config.Config, appRepo repository.Reposito
 	return s
 }
 
-func setCorsHeader(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, authorization")
-}
-
 func (s *FrontRoutesService) registerServiceFuncs() {
 	s.serviceFuncs = map[RequestType]ServiceFunc{
-		FrontRoutesGet:     {s.V1FrontRoutesServiceGet, "GET", apiV1Path + frontRoutesPath + restWildcardPath},
-		FrontRoutesPost:    {s.V1FrontRoutesServicePost, "POST", apiV1Path + frontRoutesPath + restWildcardPath},
-		FrontRoutesPut:     {s.V1FrontRoutesServicePut, "PUT", apiV1Path + frontRoutesPath + restWildcardPath},
-		FrontRoutesDelete:  {s.V1FrontRoutesServiceDelete, "DELETE", apiV1Path + frontRoutesPath + restWildcardPath},
-		FrontRoutesOptions: {s.V1FrontRoutesServiceOptions, "OPTIONS", apiV1Path + frontRoutesPath + restWildcardPath},
+		FrontRoutesGet:    {s.V1FrontRoutesServiceGet, "GET", apiV1Path + frontRoutesPath + restWildcardPath},
+		FrontRoutesPost:   {s.V1FrontRoutesServicePost, "POST", apiV1Path + frontRoutesPath + restWildcardPath},
+		FrontRoutesPut:    {s.V1FrontRoutesServicePut, "PUT", apiV1Path + frontRoutesPath + restWildcardPath},
+		FrontRoutesDelete: {s.V1FrontRoutesServiceDelete, "DELETE", apiV1Path + frontRoutesPath + restWildcardPath},
 	}
 }
 
@@ -85,24 +77,14 @@ func (s *FrontRoutesService) ServiceFunction(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		bodyJson = make(map[string]interface{})
 	}
-	if reqType == FrontRoutesOptions {
-		setCorsHeader(w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
 	respJson, rerr := handlerFunc.Handler(bodyJson)
 	if rerr != nil {
 		ErrorHandler(s.appConfig.GetLogger(), w, errorMessage, rerr, http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	setCorsHeader(w, r)
 	w.WriteHeader(http.StatusOK)
 	w.Write(respJson)
-}
-
-func (s *FrontRoutesService) V1FrontRoutesServiceOptions(bodyJson map[string]interface{}) ([]byte, error) {
-	return nil, nil
 }
 
 func (s *FrontRoutesService) V1FrontRoutesServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
