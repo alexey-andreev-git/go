@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -77,6 +78,19 @@ func (s *AuthService) ServiceFunction(w http.ResponseWriter, r *http.Request, ve
 		// ErrorHandler(s.appConfig.GetLogger(), w, errorMessage, err, http.StatusBadRequest)
 		// return
 		bodyJson = make(map[string]interface{})
+		if r.Method == http.MethodGet {
+			token := r.Header.Get("Authorization")
+			tokenLen := 6
+			if strings.ToLower(token[:tokenLen]) != "bearer" {
+				ErrorHandler(s.appConfig.GetLogger(), w, errorMessage, fmt.Errorf("incorrect token"), http.StatusBadRequest)
+				return
+			}
+			for tokenLen < len(token) && token[tokenLen] == ' ' {
+				tokenLen++
+			}
+			token = token[tokenLen:] // remove "Token " from token
+			bodyJson["user"] = map[string]interface{}{"token": token}
+		}
 	}
 	respJson, rerr := handlerFunc.Handler(bodyJson)
 	if rerr != nil {
@@ -89,10 +103,18 @@ func (s *AuthService) ServiceFunction(w http.ResponseWriter, r *http.Request, ve
 }
 
 func (s *AuthService) V1AuthServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
-	if bodyJson["email"] != "test@email.net" {
-		return nil, fmt.Errorf("user not found")
+	// if bodyJson["email"] != "test@email.net" {
+	// 	return nil, fmt.Errorf("user not found")
+	// }
+	// response := ([]byte)("{\"message\":\"User found\"}")
+	user := bodyJson["user"].(map[string]interface{})
+	response := ([]byte)(nil)
+	if ok, err := ValidateToken(user["token"].(string)); ok {
+		response = ([]byte)("{\"user\": {\"token\": \"" + user["token"].(string) + "\"}}")
+		s.appConfig.GetLogger().Info("User found:" + string(response))
+	} else {
+		return nil, err
 	}
-	response := ([]byte)("{\"message\":\"User found\"}")
 	return response, nil
 }
 
@@ -128,7 +150,7 @@ func (s *AuthService) V1AuthServiceDelete(bodyJson map[string]interface{}) ([]by
 }
 
 func GenerateToken(user string) (string, error) {
-	jwtKey := []byte("your_secret_key") // Replace with a secure key
+	secretKey := []byte("your_secret_key") // Replace with a secure key
 
 	period := 24
 
@@ -147,10 +169,39 @@ func GenerateToken(user string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", err
 	}
 
 	return tokenString, nil
+}
+
+func ValidateToken(tokenString string) (bool, error) {
+	secretKey := []byte("your_secret_key") // Replace with a secure key
+
+	// Parse the token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Ensure the signing method is HMAC
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return secretKey, nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	// Validate token claims
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if exp, ok := claims["exp"].(float64); ok {
+			if time.Unix(int64(exp), 0).Before(time.Now()) {
+				return false, fmt.Errorf("token is expired")
+			}
+		}
+		return true, nil
+	}
+
+	return false, fmt.Errorf("invalid token")
 }
