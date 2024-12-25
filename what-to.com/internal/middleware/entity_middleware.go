@@ -27,6 +27,28 @@ func NewEntityMiddleware(appConfig *config.Config, router *mux.Router) *EntityMi
 	return m
 }
 
+func (m *EntityMiddleware) Use() {
+	for _, f := range m.handlerFuncs {
+		m.appRouter.Use(f)
+	}
+}
+
+func (m *EntityMiddleware) ChainMiddleware() http.Handler {
+	handler := http.Handler(m.GetMiddlewareRouter())
+	for _, f := range m.handlerFuncs {
+		handler = f(handler)
+	}
+	return handler
+}
+
+func (m *EntityMiddleware) AddHandlerFunc(f func(http.Handler) http.Handler) {
+	m.handlerFuncs = append(m.handlerFuncs, f)
+}
+
+func (m *EntityMiddleware) GetMiddlewareRouter() *mux.Router {
+	return m.appRouter
+}
+
 func (m *EntityMiddleware) Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		msgfmt := "%s [HTTP] [%s] handler called from: %s, path: %s"
@@ -62,22 +84,4 @@ func (m *EntityMiddleware) Cors(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (m *EntityMiddleware) Use() {
-	for _, f := range m.handlerFuncs {
-		m.appRouter.Use(f)
-	}
-}
-
-func (m *EntityMiddleware) ChainMiddleware() http.Handler {
-	handler := http.Handler(m.GetMiddlewareRouter())
-	for _, f := range m.handlerFuncs {
-		handler = f(handler)
-	}
-	return handler
-}
-
-func (m *EntityMiddleware) GetMiddlewareRouter() *mux.Router {
-	return m.appRouter
 }

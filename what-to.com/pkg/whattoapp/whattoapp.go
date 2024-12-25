@@ -64,6 +64,13 @@ func (app *WhatToApp) Start() error {
 		),
 	)
 	app.appRouter.AddController(
+		"front_routes",
+		controller.NewHttpControllerV1(
+			app.appConfig,
+			service.NewDynamicFormService(app.appConfig, app.appRepository),
+		),
+	)
+	app.appRouter.AddController(
 		"front",
 		controller.NewHttpControllerV1(
 			app.appConfig,
