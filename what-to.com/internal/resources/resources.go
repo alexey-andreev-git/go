@@ -9,16 +9,17 @@ var (
 	appResources embed.FS
 )
 
-type AppSourcesInterface interface {
-	GetRes() embed.FS
-}
-
-type AppSources struct{}
+type (
+	AppSourcesInterface interface {
+		GetFs() embed.FS
+	}
+	AppSources struct{}
+)
 
 func NewAppSources() *AppSources {
 	return &AppSources{}
 }
 
-func (us *AppSources) GetRes() embed.FS {
+func (us *AppSources) GetFs() embed.FS {
 	return appResources
 }

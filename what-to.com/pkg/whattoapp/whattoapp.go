@@ -70,11 +70,18 @@ func (app *WhatToApp) Start() error {
 			service.NewDynamicFormService(app.appConfig, app.appRepository),
 		),
 	)
+	// app.appRouter.AddController(
+	// 	"front",
+	// 	controller.NewHttpControllerV1(
+	// 		app.appConfig,
+	// 		service.NewFrontService(app.appConfig, app.appRepository),
+	// 	),
+	// )
 	app.appRouter.AddController(
 		"front",
-		controller.NewHttpControllerV1(
+		controller.NewFrontendControllerV1(
 			app.appConfig,
-			service.NewFrontService(app.appConfig, app.appRepository),
+			app.appRepository,
 		),
 	)
 	return app.startServer()

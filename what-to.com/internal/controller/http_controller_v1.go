@@ -35,6 +35,16 @@ func (c *HttpControllerV1) handleRequest(requestType service.RequestType) http.H
 	}
 }
 
+func (c *HttpControllerV1) AddHandler(handler ControllerHandlerT) {
+	c.httpHandlers = append(c.httpHandlers, ControllerHandlerT{Method: handler.Method, Handler: handler.Handler, Path: handler.Path})
+}
+
+func (c *HttpControllerV1) AddHandlers(handlers ...ControllerHandlerT) {
+	for _, handler := range handlers {
+		c.AddHandler(handler)
+	}
+}
+
 func (c *HttpControllerV1) GetHandlers() HttpHandlersT {
 	return c.httpHandlers
 }

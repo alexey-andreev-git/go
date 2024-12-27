@@ -39,10 +39,10 @@ func NewFrontService(appConfig *config.Config, appRepo repository.Repository) *F
 
 func (s *FrontControllerService) registerServiceFuncs() {
 	s.serviceFuncs = map[RequestType]ServiceFunc{
-		EntityGet:    {s.V1FrontControllerServiceGet, "GET", restWildcardPath},
-		EntityPost:   {s.V1FrontControllerServicePost, "POST", restWildcardPath},
-		EntityPut:    {s.V1FrontControllerServicePut, "PUT", restWildcardPath},
-		EntityDelete: {s.V1FrontControllerServiceDelete, "DELETE", restWildcardPath},
+		FrontGet:    {s.V1FrontControllerServiceGet, "GET", restWildcardPath},
+		FrontPost:   {s.V1FrontControllerServicePost, "POST", restWildcardPath},
+		FrontPut:    {s.V1FrontControllerServicePut, "PUT", restWildcardPath},
+		FrontDelete: {s.V1FrontControllerServiceDelete, "DELETE", restWildcardPath},
 	}
 }
 
@@ -98,7 +98,7 @@ func (s *FrontControllerService) ServiceFunction(w http.ResponseWriter, r *http.
 }
 
 func (s *FrontControllerService) getFrontFs() (fs.FS, error) {
-	subFS, err := fs.Sub(s.appRes.GetRes(), "appfs/frontend")
+	subFS, err := fs.Sub(s.appRes.GetFs(), "appfs/frontend")
 	if err != nil {
 		return nil, err
 	}

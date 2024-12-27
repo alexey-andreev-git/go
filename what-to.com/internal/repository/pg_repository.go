@@ -76,25 +76,27 @@ type (
 	}
 )
 
-var entityFieldToColumn = map[string]string{
-	"id":      "entity_id",
-	"name":    "entity_name",
-	"comment": "entity_comment",
-}
+var (
+	entityFieldToColumn = map[string]string{
+		"id":      "entity_id",
+		"name":    "entity_name",
+		"comment": "entity_comment",
+	}
 
-var entityDataFieldToColumn = map[string]string{
-	"entity": "entities_data_entity",
-	"order":  "entities_data_order",
-	"value":  "entities_data_value",
-}
+	entityDataFieldToColumn = map[string]string{
+		"entity": "entities_data_entity",
+		"order":  "entities_data_order",
+		"value":  "entities_data_value",
+	}
 
-var entityDataRefFieldToColumn = map[string]string{
-	"entity":  "entities_data_reference_entity",
-	"order":   "entities_data_reference_order",
-	"name":    "entities_data_reference_name",
-	"type":    "entities_data_reference_type",
-	"comment": "entities_data_reference_comment",
-}
+	entityDataRefFieldToColumn = map[string]string{
+		"entity":  "entities_data_reference_entity",
+		"order":   "entities_data_reference_order",
+		"name":    "entities_data_reference_name",
+		"type":    "entities_data_reference_type",
+		"comment": "entities_data_reference_comment",
+	}
+)
 
 // NewPgRepository initializes a new PostgreSQL repository
 func NewPgRepository(appConfig *config.Config) *PgRepository {
@@ -185,7 +187,7 @@ func (r *PgRepository) checkDB() bool {
 func (r *PgRepository) UpdateDB() {
 	appRes := resources.NewAppSources()
 	fn := r.appConfig.GetConfig()[config.KeyInitDbFileName].(string)
-	data, err := appRes.GetRes().ReadFile(fn)
+	data, err := appRes.GetFs().ReadFile(fn)
 	if err != nil {
 		r.appConfig.GetLogger().Fatal("File read error [%s] "+fn, err)
 	}
