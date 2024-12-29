@@ -7,19 +7,33 @@ import (
 	"strings"
 
 	"what-to.com/internal/config"
+	"what-to.com/internal/models"
 	"what-to.com/internal/resources"
+	"what-to.com/internal/service"
 )
 
 type HttpFrontendControllerV1 struct {
 	httpHandlers HttpHandlersT
 	config       *config.Config
+	newService   func() service.Service
 }
 
-func NewFrontendControllerV1(appConfig *config.Config) *HttpFrontendControllerV1 {
+const (
+	frontRoutesPath = "/front/routes"
+	frontFormsPath  = "/front/forms"
+)
+
+func NewFrontendControllerV1(appConfig *config.Config, newSvc func() service.Service) *HttpFrontendControllerV1 {
 	c := &HttpFrontendControllerV1{
-		config: appConfig,
+		config:     appConfig,
+		newService: newSvc,
 	}
-	c.AddHandler(ControllerHandlerT{Method: "GET", Handler: c.FrontendGet, Path: restWildcardPath})
+	// c.AddHandler(ControllerHandlerT{Method: "GET", Handler: c.FrontendGet, Path: restWildcardPath})
+	c.httpHandlers = HttpHandlersT{
+		{Method: "GET", Handler: c.FrontendRoutesGet, Path: apiV1Path + frontRoutesPath + restWildcardPath},
+		{Method: "GET", Handler: c.FrontendFormsGet, Path: apiV1Path + frontFormsPath + restWildcardPath},
+		{Method: "GET", Handler: c.FrontendGet, Path: restWildcardPath},
+	}
 	return c
 }
 
@@ -39,14 +53,26 @@ func (c *HttpFrontendControllerV1) FrontendGet(w http.ResponseWriter, r *http.Re
 	http.StripPrefix("/", fileServer).ServeHTTP(w, r)
 }
 
-func (c *HttpFrontendControllerV1) AddHandler(handler ControllerHandlerT) {
-	c.httpHandlers = append(c.httpHandlers, ControllerHandlerT{Method: handler.Method, Handler: handler.Handler, Path: handler.Path})
+func (c *HttpFrontendControllerV1) FrontendRoutesGet(w http.ResponseWriter, r *http.Request) {
+	routesData := &models.Routes{}
+	svc := c.newService().(*service.FrontService)
+	f := svc.GetServiceFuncs()[service.FrontRoutesGet]
+	if _, err := f.Handler(routesData); err != nil {
+		ErrorHandler(c.config.GetLogger(), w, errorMessage, err, http.StatusBadRequest)
+		return
+	}
+	SetResponseJson(w, routesData)
 }
 
-func (c *HttpFrontendControllerV1) AddHandlers(handlers ...ControllerHandlerT) {
-	for _, handler := range handlers {
-		c.AddHandler(handler)
+func (c *HttpFrontendControllerV1) FrontendFormsGet(w http.ResponseWriter, r *http.Request) {
+	formData := &models.Controls{}
+	svc := c.newService().(*service.FrontService)
+	f := svc.GetServiceFuncs()[service.FrontFormDtaGet]
+	if _, err := f.Handler(formData); err != nil {
+		ErrorHandler(c.config.GetLogger(), w, errorMessage, err, http.StatusBadRequest)
+		return
 	}
+	SetResponseJson(w, formData)
 }
 
 func (c *HttpFrontendControllerV1) GetHandlers() HttpHandlersT {

@@ -15,15 +15,6 @@ type (
 		appConfig     *config.Config
 		serviceFuncs  map[RequestType]ServiceFunc
 	}
-	ControlData struct {
-		Name        string   `json:"name"`
-		Type        string   `json:"type"`
-		Placeholder string   `json:"placeholder"`
-		Validators  []string `json:"validators"`
-	}
-	Controls struct {
-		Controls []ControlData `json:"controls"`
-	}
 )
 
 const (
@@ -110,15 +101,15 @@ func (s *DynamicFormService) V1DynamicFormServiceDelete(bodyJson interface{}) ([
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
 }
 
-func getDefaultFormsMap() Controls {
-	return Controls{
-		Controls: []ControlData{
-			{Name: "firstName", Type: "text", Placeholder: "First Name", Validators: []string{"required"}},
-			{Name: "lastName", Type: "text", Placeholder: "Last Name", Validators: []string{"required"}},
-			{Name: "email", Type: "email", Placeholder: "Email", Validators: []string{"required", "email"}},
-			{Name: "password", Type: "password", Placeholder: "Password", Validators: []string{"required", "minLength:6"}},
-			{Name: "confirmPassword", Type: "password", Placeholder: "Confirm Password", Validators: []string{"required", "minLength:6"}},
-			{Name: "test", Type: "submit", Placeholder: "Test", Validators: nil},
-		},
-	}
-}
+// func getDefaultFormsMap() Controls {
+// 	return Controls{
+// 		Controls: []ControlData{
+// 			{Name: "firstName", Type: "text", Placeholder: "First Name", Validators: []string{"required"}},
+// 			{Name: "lastName", Type: "text", Placeholder: "Last Name", Validators: []string{"required"}},
+// 			{Name: "email", Type: "email", Placeholder: "Email", Validators: []string{"required", "email"}},
+// 			{Name: "password", Type: "password", Placeholder: "Password", Validators: []string{"required", "minLength:6"}},
+// 			{Name: "confirmPassword", Type: "password", Placeholder: "Confirm Password", Validators: []string{"required", "minLength:6"}},
+// 			{Name: "test", Type: "submit", Placeholder: "Test", Validators: nil},
+// 		},
+// 	}
+// }

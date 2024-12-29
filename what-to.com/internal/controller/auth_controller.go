@@ -65,13 +65,7 @@ func (c *AuthControllerV1) AuthGet(w http.ResponseWriter, r *http.Request) {
 		ErrorHandler(c.config.GetLogger(), w, errorMessage, err, http.StatusBadRequest)
 		return
 	}
-	// Write the response in JSON format
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(userData); err != nil {
-		http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
-		return
-	}
+	SetResponseJson(w, userData)
 }
 
 func (c *AuthControllerV1) AuthPost(w http.ResponseWriter, r *http.Request) {
@@ -92,13 +86,7 @@ func (c *AuthControllerV1) AuthPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Encode the response to JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(userData)
-	if err != nil {
-		http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
-		return
-	}
+	SetResponseJson(w, userData)
 }
 
 func (c *AuthControllerV1) AddHandler(handler ControllerHandlerT) {

@@ -32,10 +32,8 @@ func NewWhattoApp() *WhatToApp {
 	app.appRouter = router.NewEntityRouter()
 	app.httpConfig = app.appConfig.GetConfig()["http"].(config.ConfigT)
 	app.appMiddleware = middleware.NewEntityMiddleware(app.appConfig, app.appRouter.GetMuxRouter())
-	// app.appMiddleware.Use()
 	app.httpServer = &http.Server{
-		Addr: fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
-		// Handler: app.appRouter.GetMuxRouter(), // Http handlers here.
+		Addr:    fmt.Sprintf(":%d", app.httpConfig["port"].(int)), // Configure the bind address.
 		Handler: app.appMiddleware.ChainMiddleware(),
 	}
 	return app
@@ -58,30 +56,12 @@ func (app *WhatToApp) Start() error {
 			}),
 	)
 	app.appRouter.AddController(
-		"front_routes",
-		controller.NewHttpControllerV1(
-			app.appConfig,
-			service.NewFrontRoutesService(app.appConfig, app.appRepository),
-		),
-	)
-	app.appRouter.AddController(
-		"front_routes",
-		controller.NewHttpControllerV1(
-			app.appConfig,
-			service.NewDynamicFormService(app.appConfig, app.appRepository),
-		),
-	)
-	// app.appRouter.AddController(
-	// 	"front",
-	// 	controller.NewHttpControllerV1(
-	// 		app.appConfig,
-	// 		service.NewFrontService(app.appConfig, app.appRepository),
-	// 	),
-	// )
-	app.appRouter.AddController(
 		"front",
 		controller.NewFrontendControllerV1(
 			app.appConfig,
+			func() service.Service {
+				return service.NewFrontService(app.appConfig, app.appRepository)
+			},
 		),
 	)
 	return app.startServer()
