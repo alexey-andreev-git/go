@@ -17,7 +17,7 @@ type (
 	RequestType int
 
 	ServiceFunc struct {
-		Handler func(map[string]interface{}) ([]byte, error)
+		Handler func(interface{}) ([]byte, error)
 		Method  string
 		Path    string
 	}

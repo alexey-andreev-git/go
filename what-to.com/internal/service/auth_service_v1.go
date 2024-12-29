@@ -8,25 +8,20 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"what-to.com/internal/config"
+	"what-to.com/internal/models"
 	"what-to.com/internal/repository"
 )
 
 // Struct of entity service
 type (
+	Climes struct {
+		Username string `json:"username"`
+		jwt.RegisteredClaims
+	}
 	AuthService struct {
 		appRepository repository.Repository
 		appConfig     *config.Config
 		serviceFuncs  map[RequestType]ServiceFunc
-	}
-	User struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		Token    string `json:"token"`
-	}
-	Climes struct {
-		Username string `json:"username"`
-		jwt.RegisteredClaims
 	}
 )
 
@@ -102,37 +97,32 @@ func (s *AuthService) ServiceFunction(w http.ResponseWriter, r *http.Request, ve
 	w.Write(respJson)
 }
 
-func (s *AuthService) V1AuthServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
-	// if bodyJson["email"] != "test@email.net" {
-	// 	return nil, fmt.Errorf("user not found")
-	// }
-	// response := ([]byte)("{\"message\":\"User found\"}")
-	user := bodyJson["user"].(map[string]interface{})
+func (s *AuthService) V1AuthServiceGet(data interface{}) ([]byte, error) {
+	user := data.(*models.User)
 	response := ([]byte)(nil)
-	if ok, err := ValidateToken(user["token"].(string)); ok {
-		response = ([]byte)("{\"user\": {\"token\": \"" + user["token"].(string) + "\"}}")
-		s.appConfig.GetLogger().Info("User found:" + string(response))
-	} else {
+	if ok, err := ValidateToken(user.Token); !ok {
 		return nil, err
 	}
-	return response, nil
+	response = ([]byte)("{\"user\": {\"token\": \"" + user.Token + "\"}}")
+	s.appConfig.GetLogger().Info("User found:" + string(response))
+	return nil, nil
 }
 
-func (s *AuthService) V1AuthServicePost(bodyJson map[string]interface{}) ([]byte, error) {
-	// response := ([]byte)("{\"message\":\"User created\"}")
-	user := bodyJson["user"].(map[string]interface{})
-	userName := user["username"].(string)
-	token, err := GenerateToken(userName)
+func (s *AuthService) V1AuthServicePost(data interface{}) ([]byte, error) {
+	user := data.(*models.User)
+	token, err := GenerateToken(user.Name)
 	if err != nil {
 		return nil, err
 	}
-	response := ([]byte)("{\"user\": {\"token\": \"" + token + "\"}}")
-	s.appConfig.GetLogger().Info("User created:" + string(response))
-	return response, nil
+	if user.Password != "" {
+		user.Password = "********"
+	}
+	user.Token = token
+	return nil, nil
 }
 
-func (s *AuthService) V1AuthServicePut(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).UpdateEntity(bodyJson)
+func (s *AuthService) V1AuthServicePut(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).UpdateEntity(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +130,23 @@ func (s *AuthService) V1AuthServicePut(bodyJson map[string]interface{}) ([]byte,
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "updated", rows, rerr)), nil
 }
 
-func (s *AuthService) V1AuthServiceDelete(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).DeleteEntity(bodyJson)
+func (s *AuthService) V1AuthServiceDelete(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).DeleteEntity(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
 	rows, rerr := result.RowsAffected()
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
+}
+
+func (s *AuthService) ValidateUser(user *models.User) error {
+	if user.Name == "" {
+		return fmt.Errorf("username is empty")
+	}
+	if user.Password == "" {
+		return fmt.Errorf("password is empty")
+	}
+	return nil
 }
 
 func GenerateToken(user string) (string, error) {

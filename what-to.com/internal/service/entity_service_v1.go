@@ -94,8 +94,8 @@ func (s *EntityService) ServiceFunction(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-func (s *EntityService) V1EntityServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
-	entities, err := s.appRepository.(*repository.PgRepository).GetEntity(bodyJson)
+func (s *EntityService) V1EntityServiceGet(bodyJson interface{}) ([]byte, error) {
+	entities, err := s.appRepository.(*repository.PgRepository).GetEntity(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +106,8 @@ func (s *EntityService) V1EntityServiceGet(bodyJson map[string]interface{}) ([]b
 	return response, nil
 }
 
-func (s *EntityService) V1EntityServicePost(bodyJson map[string]interface{}) ([]byte, error) {
-	entities, err := s.appRepository.(*repository.PgRepository).CreateEntity(bodyJson)
+func (s *EntityService) V1EntityServicePost(bodyJson interface{}) ([]byte, error) {
+	entities, err := s.appRepository.(*repository.PgRepository).CreateEntity(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -119,8 +119,8 @@ func (s *EntityService) V1EntityServicePost(bodyJson map[string]interface{}) ([]
 	return response, nil
 }
 
-func (s *EntityService) V1EntityServicePut(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).UpdateEntity(bodyJson)
+func (s *EntityService) V1EntityServicePut(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).UpdateEntity(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -128,8 +128,8 @@ func (s *EntityService) V1EntityServicePut(bodyJson map[string]interface{}) ([]b
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "updated", rows, rerr)), nil
 }
 
-func (s *EntityService) V1EntityServiceDelete(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).DeleteEntity(bodyJson)
+func (s *EntityService) V1EntityServiceDelete(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).DeleteEntity(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -137,8 +137,8 @@ func (s *EntityService) V1EntityServiceDelete(bodyJson map[string]interface{}) (
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
 }
 
-func (s *EntityService) V1EntityDataServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
-	entityData, err := s.appRepository.(*repository.PgRepository).GetEntityData(bodyJson)
+func (s *EntityService) V1EntityDataServiceGet(bodyJson interface{}) ([]byte, error) {
+	entityData, err := s.appRepository.(*repository.PgRepository).GetEntityData(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -149,8 +149,8 @@ func (s *EntityService) V1EntityDataServiceGet(bodyJson map[string]interface{}) 
 	return response, nil
 }
 
-func (s *EntityService) V1EntityDataServicePost(bodyJson map[string]interface{}) ([]byte, error) {
-	entityData, err := s.appRepository.(*repository.PgRepository).CreateEntityData(bodyJson)
+func (s *EntityService) V1EntityDataServicePost(bodyJson interface{}) ([]byte, error) {
+	entityData, err := s.appRepository.(*repository.PgRepository).CreateEntityData(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -162,8 +162,8 @@ func (s *EntityService) V1EntityDataServicePost(bodyJson map[string]interface{})
 	return response, nil
 }
 
-func (s *EntityService) V1EntityDataServicePut(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).UpdateEntityData(bodyJson)
+func (s *EntityService) V1EntityDataServicePut(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).UpdateEntityData(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -171,8 +171,8 @@ func (s *EntityService) V1EntityDataServicePut(bodyJson map[string]interface{}) 
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "updated", rows, rerr)), nil
 }
 
-func (s *EntityService) V1EntityDataServiceDelete(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).DeleteEntityData(bodyJson)
+func (s *EntityService) V1EntityDataServiceDelete(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).DeleteEntityData(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +180,8 @@ func (s *EntityService) V1EntityDataServiceDelete(bodyJson map[string]interface{
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
 }
 
-func (s *EntityService) V1EntityDataRefServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
-	entityDataRef, err := s.appRepository.(*repository.PgRepository).GetEntityDataRef(bodyJson)
+func (s *EntityService) V1EntityDataRefServiceGet(bodyJson interface{}) ([]byte, error) {
+	entityDataRef, err := s.appRepository.(*repository.PgRepository).GetEntityDataRef(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -192,8 +192,8 @@ func (s *EntityService) V1EntityDataRefServiceGet(bodyJson map[string]interface{
 	return response, nil
 }
 
-func (s *EntityService) V1EntityDataRefServicePost(bodyJson map[string]interface{}) ([]byte, error) {
-	entityDataRef, err := s.appRepository.(*repository.PgRepository).CreateEntityDataRef(bodyJson)
+func (s *EntityService) V1EntityDataRefServicePost(bodyJson interface{}) ([]byte, error) {
+	entityDataRef, err := s.appRepository.(*repository.PgRepository).CreateEntityDataRef(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -205,8 +205,8 @@ func (s *EntityService) V1EntityDataRefServicePost(bodyJson map[string]interface
 	return response, nil
 }
 
-func (s *EntityService) V1EntityDataRefServicePut(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).UpdateEntityDataRef(bodyJson)
+func (s *EntityService) V1EntityDataRefServicePut(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).UpdateEntityDataRef(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +214,8 @@ func (s *EntityService) V1EntityDataRefServicePut(bodyJson map[string]interface{
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "updated", rows, rerr)), nil
 }
 
-func (s *EntityService) V1EntityDataRefServiceDelete(bodyJson map[string]interface{}) ([]byte, error) {
-	result, err := s.appRepository.(*repository.PgRepository).DeleteEntityDataRef(bodyJson)
+func (s *EntityService) V1EntityDataRefServiceDelete(bodyJson interface{}) ([]byte, error) {
+	result, err := s.appRepository.(*repository.PgRepository).DeleteEntityDataRef(bodyJson.(map[string]interface{}))
 	if err != nil {
 		return nil, err
 	}

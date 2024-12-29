@@ -87,7 +87,7 @@ func (s *FrontRoutesService) ServiceFunction(w http.ResponseWriter, r *http.Requ
 	w.Write(respJson)
 }
 
-func (s *FrontRoutesService) V1FrontRoutesServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *FrontRoutesService) V1FrontRoutesServiceGet(bodyJson interface{}) ([]byte, error) {
 	routesMap := getDefaultRoutesMap()
 	result, err := json.Marshal(routesMap)
 	if err != nil {
@@ -98,18 +98,18 @@ func (s *FrontRoutesService) V1FrontRoutesServiceGet(bodyJson map[string]interfa
 	return response, nil
 }
 
-func (s *FrontRoutesService) V1FrontRoutesServicePost(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *FrontRoutesService) V1FrontRoutesServicePost(bodyJson interface{}) ([]byte, error) {
 	response := ([]byte)(`{"message":"Fron Routes Post"}`)
 	s.appConfig.GetLogger().Info("User created:" + string(response))
 	return response, nil
 }
 
-func (s *FrontRoutesService) V1FrontRoutesServicePut(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *FrontRoutesService) V1FrontRoutesServicePut(bodyJson interface{}) ([]byte, error) {
 	rows, rerr := 0, fmt.Errorf("not implemented")
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "updated", rows, rerr)), nil
 }
 
-func (s *FrontRoutesService) V1FrontRoutesServiceDelete(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *FrontRoutesService) V1FrontRoutesServiceDelete(bodyJson interface{}) ([]byte, error) {
 	rows, rerr := 0, fmt.Errorf("not implemented")
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
 }

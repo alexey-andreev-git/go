@@ -23,6 +23,7 @@ type (
 )
 
 const (
+	apiV1Path        = "/api/v1"
 	restWildcardPath = "/{rest:.*}"
 	errorMessage     = "Error processing request"
 )

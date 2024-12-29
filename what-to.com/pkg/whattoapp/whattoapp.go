@@ -51,10 +51,11 @@ func (app *WhatToApp) Start() error {
 	)
 	app.appRouter.AddController(
 		"auth",
-		controller.NewHttpControllerV1(
+		controller.NewAuthControllerV1(
 			app.appConfig,
-			service.NewAuthService(app.appConfig, app.appRepository),
-		),
+			func() service.Service {
+				return service.NewAuthService(app.appConfig, app.appRepository)
+			}),
 	)
 	app.appRouter.AddController(
 		"front_routes",
@@ -81,7 +82,6 @@ func (app *WhatToApp) Start() error {
 		"front",
 		controller.NewFrontendControllerV1(
 			app.appConfig,
-			app.appRepository,
 		),
 	)
 	return app.startServer()

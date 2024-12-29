@@ -10,6 +10,7 @@ type User struct {
 	gorm.Model
 	Name     string        `json:"name" gorm:"size:255"`
 	Password string        `json:"password" gorm:"size:255"`
+	Token    string        `json:"token" gorm:"size:255"`
 	Person   person.Person `json:"person" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 

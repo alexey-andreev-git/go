@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"what-to.com/internal/config"
-	"what-to.com/internal/repository"
 	"what-to.com/internal/resources"
 )
 
@@ -16,7 +15,7 @@ type HttpFrontendControllerV1 struct {
 	config       *config.Config
 }
 
-func NewFrontendControllerV1(appConfig *config.Config, repo repository.Repository) *HttpFrontendControllerV1 {
+func NewFrontendControllerV1(appConfig *config.Config) *HttpFrontendControllerV1 {
 	c := &HttpFrontendControllerV1{
 		config: appConfig,
 	}

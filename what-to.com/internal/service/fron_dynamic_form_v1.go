@@ -83,7 +83,7 @@ func (s *DynamicFormService) ServiceFunction(w http.ResponseWriter, r *http.Requ
 	w.Write(respJson)
 }
 
-func (s *DynamicFormService) V1DynamicFormServiceGet(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *DynamicFormService) V1DynamicFormServiceGet(bodyJson interface{}) ([]byte, error) {
 	routesMap := getDefaultFormsMap()
 	result, err := json.Marshal(routesMap)
 	if err != nil {
@@ -94,18 +94,18 @@ func (s *DynamicFormService) V1DynamicFormServiceGet(bodyJson map[string]interfa
 	return response, nil
 }
 
-func (s *DynamicFormService) V1DynamicFormServicePost(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *DynamicFormService) V1DynamicFormServicePost(bodyJson interface{}) ([]byte, error) {
 	response := ([]byte)(`{"message":"Fron Routes Post"}`)
 	s.appConfig.GetLogger().Info("User created:" + string(response))
 	return response, nil
 }
 
-func (s *DynamicFormService) V1DynamicFormServicePut(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *DynamicFormService) V1DynamicFormServicePut(bodyJson interface{}) ([]byte, error) {
 	rows, rerr := 0, fmt.Errorf("not implemented")
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "updated", rows, rerr)), nil
 }
 
-func (s *DynamicFormService) V1DynamicFormServiceDelete(bodyJson map[string]interface{}) ([]byte, error) {
+func (s *DynamicFormService) V1DynamicFormServiceDelete(bodyJson interface{}) ([]byte, error) {
 	rows, rerr := 0, fmt.Errorf("not implemented")
 	return []byte(fmt.Sprintf(jsonOperationResultMsg, "deleted", rows, rerr)), nil
 }
